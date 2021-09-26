@@ -11,7 +11,7 @@ private:
 public:
 
     int fill(const Message& message);
-    bool exist(std::string id);
+    bool exist(const std::string& id);
     int update(const std::string& id);
     unsigned long erase_iftimeout();
     void print_content();

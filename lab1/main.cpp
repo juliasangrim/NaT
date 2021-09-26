@@ -1,80 +1,75 @@
 
+#include <netdb.h>
+#define IPv4 1
+#define IPv6 2
 #include "message.h"
 #include "storage.h"
+#include "ipv4.h"
+#include "ipv6.h"
 
-int create_multicast(char* ip) {
-    int socket_fd = 0;
-    if ((socket_fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 
-        perror("failed to create sock");
-        return  -1;
 
-    } else {
-        std::cout << "Create sock." << std::endl;
-    }
-    //set options
-    const int optval = 1;
-    if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) < 0) {
-
-        perror("failed to set sock option - reuseaddr");
-        return -1;
-
-    }
-
-    //bind sock for receiving data
-    struct sockaddr_in recv_addr{};
-    memset(&recv_addr, 0, sizeof(recv_addr));
-    recv_addr.sin_family = AF_INET;
-    recv_addr.sin_port = htons(PORT);
-    recv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-
-    if (bind(socket_fd, (const struct sockaddr* ) &recv_addr, sizeof (recv_addr)) < 0) {
-
-        perror("failed to bind sock");
-        return -1;
-
-    }
-
-    //add to multicast group
-    struct ip_mreq mreq{};
-    mreq.imr_multiaddr.s_addr = inet_addr(ip);
-    mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-
-    if (setsockopt(socket_fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
-
-        perror("failed to set option : add to multicast group");
-        return -1;
-
-    }
-    return socket_fd;
+bool is_ipv4(const char* str) {
+    struct sockaddr_in sa{};
+    return inet_pton(AF_INET, str, &(sa.sin_addr)) != 0;
 }
+
+bool is_ipv6(const char* str) {
+    struct sockaddr_in6 sa{};
+    return inet_pton(AF_INET6, str, &(sa.sin6_addr)) != 0;
+}
+
 
 int main(int argc, char** argv) {
     if (argc != 2) {
 
-        std::cout << "Write the address, please." << std::endl;
-        return -1;
+        std::cerr << "Write the address, please.(use 224.0.0.0-239.255.255.255 or ff00::/8)" << std::endl;
+        exit(EXIT_FAILURE);
 
     }
+
+    int type_addr = 0;
+    if (is_ipv4(argv[1])) {
+        type_addr = IPv4;
+    } else if (is_ipv6(argv[1])) {
+        type_addr = IPv6;
+    } else {
+        std::cerr << "Use ipv4 or ipv6 address." << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
     //create sockets
     int server_sock, sock = 0;
-    if ((server_sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-
-        perror("failed to create sock");
-        return -1;
-
-    } else {
-        std::cout << "Create server socket." << std::endl;
+    if (type_addr == IPv4) {
+        if ((server_sock = create_server_ipv4(argv[1])) < 0) {
+            exit(EXIT_FAILURE);
+        }
+        if ((sock = create_multicast_ipv4(argv[1])) < 0) {
+            exit(EXIT_FAILURE);
+        }
     }
+    if (type_addr == IPv6) {
+        if ((server_sock = create_server_ipv6(argv[1])) < 0) {
+            exit(EXIT_FAILURE);
+        }
+        if ((sock = create_multicast_ipv6(argv[1])) < 0) {
+            exit(EXIT_FAILURE);
+        }
 
-    if ((sock = create_multicast(argv[1])) < 0) {
-        return -1;
     }
 
     struct sockaddr_in dest_addr{};
-    dest_addr.sin_family = AF_INET;
-    dest_addr.sin_port = htons(PORT);
-    dest_addr.sin_addr.s_addr = inet_addr(argv[1]);
+    struct sockaddr_in6 dest_addr6{};
+    if (type_addr == IPv4) {
+        dest_addr.sin_port = htons(PORT);
+        dest_addr.sin_family = AF_INET;
+        dest_addr.sin_addr.s_addr = inet_addr(argv[1]);
+    }
+    if (type_addr == IPv6) {
+        dest_addr6.sin6_port = htons(PORT);
+        dest_addr6.sin6_family = AF_INET6;
+        inet_pton(AF_INET6, argv[1], &dest_addr6.sin6_addr);
+    }
 
     //sending and receiving message
 
@@ -90,16 +85,23 @@ int main(int argc, char** argv) {
         if (res_poll < 0) {
 
             perror("failed to call poll");
-            return -1;
+            exit(EXIT_FAILURE);
 
         }
         if (res_poll == 0) {
-            Message::send_message(server_sock, my_id, dest_addr);
+            if (type_addr == IPv4) {
+                Message::send_message(server_sock, my_id,   reinterpret_cast<sockaddr *>(&dest_addr), sizeof (dest_addr));
+            }
+            if (type_addr == IPv6) {
+                Message::send_message(server_sock, my_id, reinterpret_cast<sockaddr *>(&dest_addr6), sizeof(dest_addr6));
+            }
         } else {
 
             Message new_message;
-            Message::receive_message(sock, &new_message);
-
+            Message::receive_message(sock, &new_message, type_addr);
+            if (storage_messages.erase_iftimeout() > 0) {
+                storage_messages.print_content();
+            }
             if (my_id == new_message.id) {
                 continue;
             }
@@ -107,9 +109,6 @@ int main(int argc, char** argv) {
             if (storage_messages.exist(new_message.id)) {
 
                 storage_messages.update(new_message.id);
-                if (storage_messages.erase_iftimeout() > 0) {
-                    storage_messages.print_content();
-                }
 
             } else {
 

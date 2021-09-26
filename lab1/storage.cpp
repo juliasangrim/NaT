@@ -6,16 +6,19 @@ int Storage::fill(const Message& message) {
 }
 
 
-bool Storage::exist(std::string pid) {
+bool Storage::exist(const std::string& pid) {
     return storage_messages.count(pid) > 0;
 }
 
 void Storage::print_content() {
-    std::cout << "---------Alive version of program---------" << std::endl;
-    std::cout << "ID PROGRAM" << "               " << "IP" << std::endl;
-    for (auto & it : storage_messages)
-        std::cout << it.first << "               " << it.second.ip_from << std::endl;
-
+    if (storage_messages.empty()) {
+        std::cout << "No alive copies." << std::endl;
+    } else {
+        std::cout << "---------Alive version of program---------" << std::endl;
+        std::cout << "ID PROGRAM" << "               " << "IP" << std::endl;
+        for (auto &it: storage_messages)
+            std::cout << it.first << "               " << it.second.ip_from << std::endl;
+    }
 }
 unsigned long Storage::erase_iftimeout() {
     unsigned long old_size = storage_messages.size();
