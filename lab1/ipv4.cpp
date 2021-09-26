@@ -2,7 +2,7 @@
 
 
 int create_server_ipv4() {
-    int socket_fd = 0;
+    int socket_fd;
     if ((socket_fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 
         perror("failed to create server socket");
@@ -11,10 +11,11 @@ int create_server_ipv4() {
     } else {
         std::cout << "Create server socket." << std::endl;
     }
+    return socket_fd;
 }
 
 int create_multicast_ipv4(char* ip) {
-    int socket_fd = 0;
+    int socket_fd;
     if ((socket_fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 
         perror("failed to create sock");

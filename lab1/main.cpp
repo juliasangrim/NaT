@@ -1,7 +1,6 @@
 
 #include <netdb.h>
-#define IPv4 1
-#define IPv6 2
+
 #include "message.h"
 #include "storage.h"
 #include "ipv4.h"
