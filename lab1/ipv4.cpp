@@ -1,7 +1,7 @@
 #include "ipv4.h"
 
 
-int create_server_ipv4(char* ip) {
+int create_server_ipv4() {
     int socket_fd = 0;
     if ((socket_fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 
@@ -11,16 +11,6 @@ int create_server_ipv4(char* ip) {
     } else {
         std::cout << "Create server socket." << std::endl;
     }
-
-    struct in_addr localInterface{};
-    localInterface.s_addr = htonl(INADDR_ANY);
-    if (setsockopt(socket_fd, IPPROTO_IP, IP_MULTICAST_IF,
-                   (char *)&localInterface,
-                   sizeof(localInterface)) < 0) {
-        perror("setting local interface");
-        return ERROR;
-    }
-    return socket_fd;
 }
 
 int create_multicast_ipv4(char* ip) {

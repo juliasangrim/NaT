@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
     //create sockets
     int server_sock, sock = 0;
     if (type_addr == IPv4) {
-        if ((server_sock = create_server_ipv4(argv[1])) < 0) {
+        if ((server_sock = create_server_ipv4()) < 0) {
             exit(EXIT_FAILURE);
         }
         if ((sock = create_multicast_ipv4(argv[1])) < 0) {
@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
         }
     }
     if (type_addr == IPv6) {
-        if ((server_sock = create_server_ipv6(argv[1])) < 0) {
+        if ((server_sock = create_server_ipv6()) < 0) {
             exit(EXIT_FAILURE);
         }
         if ((sock = create_multicast_ipv6(argv[1])) < 0) {

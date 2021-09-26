@@ -15,7 +15,7 @@
 #define IPv6 2
 
 int create_multicast_ipv6(const char* ip);
-int create_server_ipv6(const char* ip);
+int create_server_ipv6();
 
 
 

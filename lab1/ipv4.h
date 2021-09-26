@@ -16,6 +16,6 @@
 #define IPv4 1
 
 int create_multicast_ipv4(char* ip);
-int create_server_ipv4(char* ip);
+int create_server_ipv4();
 
 #endif //LAB1_IPV4_H
