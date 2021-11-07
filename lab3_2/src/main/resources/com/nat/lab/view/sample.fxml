@@ -26,31 +26,37 @@
          <Font name="Century Gothic" size="17.0" />
       </font>
    </Label>
-   <Pane fx:id="pane" layoutX="527.0" layoutY="56.0" prefHeight="168.0" prefWidth="649.0">
+   <Pane layoutX="527.0" layoutY="56.0" prefHeight="168.0" prefWidth="649.0">
       <children>
-         <TextArea fx:id="Weather" layoutX="169.0" layoutY="-3.0" prefHeight="175.0" prefWidth="451.0" />
-         <ImageView fx:id="Icon" fitHeight="175.0" fitWidth="173.0" layoutX="-3.0" layoutY="-5.0" pickOnBounds="true" preserveRatio="true" />
+         <TextArea fx:id="weather" disable="true" layoutX="169.0" layoutY="-3.0" prefHeight="175.0" prefWidth="451.0" wrapText="true">
+            <font>
+               <Font name="Century Gothic" size="17.0" />
+            </font></TextArea>
+         <ImageView fx:id="icon" fitHeight="175.0" fitWidth="173.0" layoutX="-3.0" layoutY="-5.0" pickOnBounds="true" preserveRatio="true" />
       </children></Pane>
-   <ListView fx:id="list" layoutX="64.0" layoutY="259.0" prefHeight="589.0" prefWidth="374.0" />
+   <ListView fx:id="listPlaces" layoutX="64.0" layoutY="259.0" prefHeight="589.0" prefWidth="374.0" />
    <Label alignment="TOP_LEFT" layoutX="64.0" layoutY="231.0" prefHeight="28.0" prefWidth="321.0" text="Results of your searching request" textAlignment="JUSTIFY" textOverrun="CLIP" visible="true">
       <font>
          <Font name="Century Gothic" size="17.0" />
       </font>
    </Label>
-   <ListView layoutX="524.0" layoutY="259.0" prefHeight="100.0" prefWidth="623.0" />
-   <Label  alignment="TOP_LEFT" layoutX="527.0" layoutY="231.0" prefHeight="28.0" prefWidth="321.0" text="Places nearby" textAlignment="JUSTIFY" textOverrun="CLIP" visible="true">
+   <ListView fx:id="listPlacesNear" layoutX="524.0" layoutY="259.0" prefHeight="100.0" prefWidth="623.0" />
+   <Label alignment="TOP_LEFT" layoutX="527.0" layoutY="231.0" prefHeight="28.0" prefWidth="321.0" text="Places nearby" textAlignment="JUSTIFY" textOverrun="CLIP" visible="true">
       <font>
          <Font name="Century Gothic" size="17.0" />
       </font>
    </Label>
-   <Label  alignment="TOP_LEFT" layoutX="524.0" layoutY="391.0" prefHeight="28.0" prefWidth="321.0" text="Info about place" textAlignment="JUSTIFY" textOverrun="CLIP" visible="true">
+   <Label alignment="TOP_LEFT" layoutX="524.0" layoutY="391.0" prefHeight="28.0" prefWidth="321.0" text="Info about place" textAlignment="JUSTIFY" textOverrun="CLIP" visible="true">
       <font>
          <Font name="Century Gothic" size="17.0" />
       </font>
    </Label>
    <Pane layoutX="521.0" layoutY="419.0" prefHeight="429.0" prefWidth="623.0">
       <children>
-         <TextArea prefHeight="429.0" prefWidth="623.0" />
+         <TextArea fx:id="info" disable="true" prefHeight="429.0" prefWidth="623.0" wrapText="true">
+            <font>
+               <Font name="Century Gothic" size="17.0" />
+            </font></TextArea>
       </children>
    </Pane>
 </AnchorPane>

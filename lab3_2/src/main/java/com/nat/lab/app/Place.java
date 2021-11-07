@@ -8,9 +8,9 @@ public class Place {
        @Getter
        private final String name;
        @Getter
-       private final String country;
-       @Getter
        private final String city;
+       @Getter
+       private final String country;
        @Getter
        private final String street;
        @Getter
@@ -26,24 +26,29 @@ public class Place {
        public String toString() {
               String output = new String("");
               if (country != null) {
-                     output += "Country: ";
-                     output += country;
+                     output += String.format("""
+                             Country: %s
+                             """, country);
               }
               if (city != null) {
-                     output += "\nCity: ";
-                     output += city;
+                     output += String.format("""
+                             City: %s
+                             """, city);
               }
               if (street != null) {
-                     output += "\nStreet: ";
-                     output += street;
+                     output += String.format("""
+                             Street: %s
+                             """, street);
               }
               if (housenamber != null) {
-                     output += "\nHouse number: ";
-                     output += housenamber;
+                     output += String.format("""
+                             House number: %s
+                             """, housenamber);
               }
               if (name != null) {
-                     output += "\nPlace name: ";
-                     output += name;
+                     output += String.format("""
+                             Place name: %s
+                             """, name);
               }
               return output;
        }

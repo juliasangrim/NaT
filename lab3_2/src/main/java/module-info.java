@@ -9,6 +9,7 @@ module com.nat.lab {
     requires lombok;
     requires java.net.http;
     requires org.apache.commons.lang3;
+    requires java.desktop;
 
 
     opens com.nat.lab.app to org.apache.commons.lang3, com.fasterxml.jackson.databind;

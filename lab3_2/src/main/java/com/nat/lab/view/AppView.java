@@ -5,7 +5,6 @@ import com.nat.lab.app.AppModel;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.control.ListView;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -26,7 +25,4 @@ public class AppView extends Application {
         stage.show();
     }
 
-    public void update(ListView<String> listView) {
-
-    }
 }

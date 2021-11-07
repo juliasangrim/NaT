@@ -32,10 +32,12 @@ public class AppModel {
     @Getter
     private CompletableFuture<WeatherInfo> weather;
     @Getter
+    private CompletableFuture<Info> information;
+    @Getter
     State state;
     private boolean ifSearchError;
 
-
+    //check code response
     private HttpResponse<String> body(HttpResponse<String> response) {
         if (response.statusCode() != 200) {
             ifSearchError = true;
@@ -57,16 +59,6 @@ public class AppModel {
     }
 
 
-    private void setPlaces() throws JsonProcessingException, ExecutionException, InterruptedException, UnsupportedEncodingException, ModelException {
-        listPlaces = new CopyOnWriteArrayList<>();
-        ifSearchError = false;
-        var response = getSearchResponse();
-        if (ifSearchError) {
-            throw new ModelException("Bad response");
-        }
-        this.listPlaces = CustomJsonParser.parseGraphHopperJson(response);
-    }
-
     private CompletableFuture<CopyOnWriteArrayList<PlaceInfo>> getNearPlaceResponse(Place place)  {
         var client = HttpClient.newHttpClient();
         var requestURIString = String.format("%sradius?radius=1000&lon=%s&lat=%s&units=metric&apikey=%s", urlOpenTrip, place.getLng(), place.getLat(), keyOpenTrip);
@@ -79,17 +71,17 @@ public class AppModel {
                 .thenApply(this::body).thenApply(HttpResponse::body).thenApply(CustomJsonParser::parseNearbyPlaceJson);
     }
 
-//    private CompletableFuture<String> getInfoResponse(PlaceInfo place) throws ExecutionException, InterruptedException, UnsupportedEncodingException {
-//        var client = HttpClient.newHttpClient();
-//        var requestURIString = String.format("%sradius?radius=1000&lon=%s&lat=%s&apikey=%s", urlOpenTrip, place.getLng(), place.getLat(), keyOpenTrip);
-//        var request = HttpRequest.newBuilder(
-//                        URI.create(requestURIString))
-//                .header("accept", "application/json")
-//                .build();
-//        System.out.println(requestURIString);
-//        return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-//                .thenApply(this::body).thenApply(HttpResponse::body);
-//    }
+    private CompletableFuture<Info> getInfoResponse(PlaceInfo place) {
+        var client = HttpClient.newHttpClient();
+        var requestURIString = String.format("%sxid/%s?apikey=%s", urlOpenTrip, place.getXid(), keyOpenTrip);
+        var request = HttpRequest.newBuilder(
+                        URI.create(requestURIString))
+                .header("accept", "application/json")
+                .build();
+        System.out.println(requestURIString);
+        return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .thenApply(this::body).thenApply(HttpResponse::body).thenApply(CustomJsonParser::parseInfo);
+    }
 
 
     private CompletableFuture<WeatherInfo> getWeatherResponse(Place place) {
@@ -105,16 +97,39 @@ public class AppModel {
     }
 
 
-    public void searchInfo(int index) {
+    public void searchAdditionInfo(int index) throws ModelException {
+        ifSearchError = false;
         state = State.INFO;
+
         Place place = listPlaces.get(index);
+        //don't wait for end of response
         weather = getWeatherResponse(place);
         listNearbyPlaces = getNearPlaceResponse(place);
-
+        if (ifSearchError) {
+            throw new ModelException("Bad response");
+        }
     }
 
-    public void search() throws UnsupportedEncodingException, ExecutionException, JsonProcessingException, InterruptedException, ModelException {
+    public void setInfoAboutPlace(int index) throws ExecutionException, InterruptedException {
+        information = getInfoResponse(listNearbyPlaces.get().get(index));
+    }
+
+    private void setPlaces() throws JsonProcessingException, ExecutionException, InterruptedException, UnsupportedEncodingException, ModelException {
+        listPlaces = new CopyOnWriteArrayList<>();
+        ifSearchError = false;
+
+        //wait for end of response
+        var response = getSearchResponse();
+
+        if (ifSearchError) {
+            throw new ModelException("Bad response");
+        }
+        this.listPlaces = CustomJsonParser.parseGraphHopperJson(response);
+    }
+
+    public void searchPossiblePlaces() throws UnsupportedEncodingException, ExecutionException, JsonProcessingException, InterruptedException, ModelException {
         state = State.SEARCH;
+
         setPlaces();
     }
 }

@@ -4,15 +4,17 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @AllArgsConstructor
-public class PlaceInfo {
+public class Info {
     @Getter
-    String name;
+    String title;
     @Getter
-    String xid;
-
+    String text;
 
     @Override
     public String toString() {
-        return String.format(" Place name: %s ", name);
+        return String.format("""
+                %s
+                %s
+                """, title, text);
     }
 }
