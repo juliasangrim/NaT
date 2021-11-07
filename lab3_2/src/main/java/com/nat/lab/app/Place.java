@@ -1,15 +1,16 @@
 package com.nat.lab.app;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-
+@AllArgsConstructor
 public class Place {
        @Getter
        private final String name;
        @Getter
-       private final String city;
-       @Getter
        private final String country;
+       @Getter
+       private final String city;
        @Getter
        private final String street;
        @Getter
@@ -20,17 +21,6 @@ public class Place {
        private final String lng;
 
 
-
-
-       public Place(String namePlace, String city, String nameCountry, String street, String housenamber, String lat, String lng) {
-              this.name = namePlace;
-              this.country = nameCountry;
-              this.city = city;
-              this.street = street;
-              this.housenamber = housenamber;
-              this.lat = lat;
-              this.lng = lng;
-       }
 
        @Override
        public String toString() {
