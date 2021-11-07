@@ -2,6 +2,7 @@
 
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.effect.ColorAdjust?>
@@ -24,7 +25,23 @@
          <Font name="Century Gothic" size="17.0" />
       </font>
    </Label>
-   <ScrollPane layoutX="64.0" layoutY="259.0" prefHeight="589.0" prefWidth="376.0" style="-fx-background-color: LightBlue;" />
    <Pane layoutX="527.0" layoutY="56.0" prefHeight="168.0" prefWidth="649.0" />
-   <ScrollPane layoutX="527.0" layoutY="259.0" prefHeight="589.0" prefWidth="649.0" style="-fx-background-color: LightBlue;" />
+   <ScrollPane layoutX="527.0" layoutY="259.0" prefHeight="429.0" prefWidth="630.0" />
+   <ListView fx:id="list" layoutX="64.0" layoutY="259.0" prefHeight="589.0" prefWidth="374.0" />
+   <Label fx:id="labelSearch" alignment="TOP_LEFT" layoutX="64.0" layoutY="231.0" prefHeight="28.0" prefWidth="321.0" text="Results of your searching request" textAlignment="JUSTIFY" textOverrun="CLIP" visible="true">
+      <font>
+         <Font name="Century Gothic" size="17.0" />
+      </font>
+   </Label>
+   <ListView layoutX="534.0" layoutY="748.0" prefHeight="100.0" prefWidth="623.0" />
+   <Label fx:id="labelSearch1" alignment="TOP_LEFT" layoutX="534.0" layoutY="720.0" prefHeight="28.0" prefWidth="321.0" text="Places nearby" textAlignment="JUSTIFY" textOverrun="CLIP" visible="true">
+      <font>
+         <Font name="Century Gothic" size="17.0" />
+      </font>
+   </Label>
+   <Label fx:id="labelSearch11" alignment="TOP_LEFT" layoutX="527.0" layoutY="231.0" prefHeight="28.0" prefWidth="321.0" text="Info about place" textAlignment="JUSTIFY" textOverrun="CLIP" visible="true">
+      <font>
+         <Font name="Century Gothic" size="17.0" />
+      </font>
+   </Label>
 </AnchorPane>
