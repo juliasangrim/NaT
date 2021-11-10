@@ -16,9 +16,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 
 public class AppModel {
-    private final static String keyOpenTrip = "5ae2e3f221c38a28845f05b6785bf6730720aa3e439523cf2e656370";
-    private final static String keyGraphHopper = "a46d7782-ff0c-41d1-b414-0fa88b7659d4";
-    private final static String keyOpenWeather = "45029ff16520897b0b55862830db823d";
+    private final static String keyOpenTrip = "Here have to be an API kye from opentripmap.com";
+    private final static String keyGraphHopper = "Here have to be an API key for graphhopper.com";
+    private final static String keyOpenWeather = "Here have to be an API key for openweathermap.org";
     private final static String urlOpenTrip = "https://api.opentripmap.com/0.1/en/places/";
     private final static String urlGraphHopper = "https://graphhopper.com/api/1/geocode";
     private final static String urlOpenWeather = "https://api.openweathermap.org/data/2.5/weather";
