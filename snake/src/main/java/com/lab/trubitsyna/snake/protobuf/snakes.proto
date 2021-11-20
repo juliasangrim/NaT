@@ -1,6 +1,6 @@
 syntax = "proto2";
 package snakes;
-option java_package = "com.nsu.lab4.snake";
+option java_package = "com.lab.trubitsyna.snake.protobuf";
 option java_outer_classname = "SnakesProto";
 
 // Роль узла в топологии связей узлов в пределах игры

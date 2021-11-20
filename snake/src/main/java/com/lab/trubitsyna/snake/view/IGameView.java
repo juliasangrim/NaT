@@ -1,4 +1,4 @@
-package com.nsu.lab4.snake.view;
+package com.lab.trubitsyna.snake.view;
 
 public interface IGameView {
     void init();
