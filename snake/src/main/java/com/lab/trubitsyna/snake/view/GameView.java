@@ -1,20 +1,27 @@
 package com.lab.trubitsyna.snake.view;
 
+import com.lab.trubitsyna.snake.controller.MenuController;
 import com.lab.trubitsyna.snake.gameException.GameException;
+import com.lab.trubitsyna.snake.main.Main;
+import com.lab.trubitsyna.snake.model.GameModel;
+import com.lab.trubitsyna.snake.model.IListener;
+import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.StackPane;
+import javafx.scene.control.Button;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import lombok.Getter;
+import lombok.Setter;
+
+import java.io.IOException;
 
 
-public class GameViewFX implements IGameView {
+public class GameView implements IView, IListener {
     public final static int WIDTH_WINDOW = 1400;
     public final static int HEIGHT_WINDOW = 900;
     public final static int SIZE_BOARD = 800;
@@ -24,26 +31,22 @@ public class GameViewFX implements IGameView {
     public final static int COLUMNS = 20;
 
     public final static int TILE_SIZE = SIZE_BOARD / ROWS;
+    public Button playButton;
+    public Button settingsButton;
+    public Button exitButton;
     GraphicsContext gc;
+    GameModel model;
+
+    @Setter
+    Stage stage = null;
+    @Setter
+    MenuController controller = new MenuController();
 
 
-    private static final String SCENE_COLOR = "yellow";
-    @Getter
-    private Stage stage;
     @Override
     public void init() {
-        stage = new Stage(StageStyle.DECORATED);
-        stage.setTitle("Snake Game");
-        Group root = new Group();
-        Canvas canvas = new Canvas(WIDTH_WINDOW, HEIGHT_WINDOW);
-        root.getChildren().add(canvas);
-        Scene scene = new Scene(root, SIZE_BOARD, SIZE_BOARD);
-        stage.setScene(scene);
-
-        gc = canvas.getGraphicsContext2D();
-
-        render();
     }
+
 
 
 
@@ -66,15 +69,20 @@ public class GameViewFX implements IGameView {
         }
     }
 
-//    private void listen() throws GameException {
-//        if (model != null) {
-//            model.listen(this);
-//        }
-//    }
+    @Override
+    public void modelChanged(GameModel model) {
 
-//    private void noListen() {
-//        if (model != null) {
-//            model.noListen(this);
-//        }
-//    }
+    }
+
+    private void listen() throws GameException {
+        if (model != null) {
+            model.listen(this);
+        }
+    }
+
+    private void noListen() {
+        if (model != null) {
+            model.noListen(this);
+        }
+    }
 }

@@ -1,0 +1,53 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.0.10'
+    id "com.google.protobuf" version "0.8.14"
+}
+
+group 'com.lab4.trubitsyna'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'utf-8'
+}
+
+tasks.withType(JavaExec) {
+    systemProperty("file.encoding", "utf-8")
+}
+
+ext {
+    junitVersion = '5.8.1'
+}
+
+
+application {
+    mainModule = 'com.lab.trubitsyna.snake'
+    mainClass = 'com.lab.trubitsyna.snake.main.Main'
+}
+
+javafx {
+    version = '16'
+    modules = ['javafx.controls', 'javafx.fxml']
+}
+
+protobuf {
+    generatedFilesBaseDir = "$projectDir/src"
+}
+
+dependencies {
+    implementation 'com.google.protobuf:protobuf-java:3.19.1'
+    implementation('org.kordamp.bootstrapfx:bootstrapfx-core:0.4.0')
+    annotationProcessor 'org.projectlombok:lombok:1.18.22'
+    implementation 'org.projectlombok:lombok:1.18.22'
+    testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
+}
+
+test {
+    useJUnitPlatform()
+}

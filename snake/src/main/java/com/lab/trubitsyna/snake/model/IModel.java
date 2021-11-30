@@ -1,6 +1,6 @@
 package com.lab.trubitsyna.snake.model;
 
-public interface IGameModel {
+public interface IModel {
     void updateModel();
 
 

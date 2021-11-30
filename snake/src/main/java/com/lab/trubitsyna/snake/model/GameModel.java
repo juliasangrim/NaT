@@ -2,10 +2,9 @@ package com.lab.trubitsyna.snake.model;
 
 import com.lab.trubitsyna.snake.gameException.GameException;
 
-import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class SnakeModel implements IGameModel {
+public class GameModel implements IModel {
     private final CopyOnWriteArrayList<IListener> listeners = new CopyOnWriteArrayList<>();
     @Override
     public void updateModel() {

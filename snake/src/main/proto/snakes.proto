@@ -1,6 +1,6 @@
 syntax = "proto2";
-package snakes;
-option java_package = "com.lab.trubitsyna.snake.protobuf";
+//package com.lab.trubitsyna.snake.protoClass;
+option java_package = "com.lab.trubitsyna.snake.protoClass";
 option java_outer_classname = "SnakesProto";
 
 // Роль узла в топологии связей узлов в пределах игры
@@ -100,7 +100,7 @@ message GameMessage {
         required GameState state = 1; // Состояние игрового поля
     }
     // Уведомление об идущей игре, регулярно отправляется multicast-ом
-    message AnnouncementMsg {
+     message AnnouncementMsg {
         required GamePlayers players = 1;            // Текущие игроки
         required GameConfig config = 2;              // Параметры игры
         optional bool can_join = 3 [default = true]; // Можно ли новому игроку присоединиться к игре (есть ли место на поле)
