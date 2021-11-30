@@ -1,6 +1,5 @@
 package com.lab.trubitsyna.snake.main;
 
-import com.lab.trubitsyna.snake.controller.MenuController;
 import com.lab.trubitsyna.snake.model.GameModel;
 import com.lab.trubitsyna.snake.view.MenuView;
 import javafx.application.Application;
@@ -20,7 +19,6 @@ public class Main extends Application{
     public void start(Stage primaryStage) throws Exception {
 
         GameModel model = new GameModel();
-        MenuController controller = new MenuController();
         primaryStage.setTitle("My App");
         primaryStage.initStyle(StageStyle.DECORATED);
         primaryStage.setResizable(false);
