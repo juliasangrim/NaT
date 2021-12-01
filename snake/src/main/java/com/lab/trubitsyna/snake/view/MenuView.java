@@ -1,10 +1,8 @@
 package com.lab.trubitsyna.snake.view;
 
-import com.lab.trubitsyna.snake.model.GameModel;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.stage.Stage;
 import lombok.Setter;
@@ -24,48 +22,47 @@ public class MenuView implements IView{
     @Setter
     Stage stage;
 
-
-    public void setHandlerPlayButton() {
-        playButton.setOnMouseClicked(event -> loadApp());
+    @FXML
+    public void mouseListenerPlay() {
+        playButton.setOnMouseClicked(event -> onPlayButtonPressed());
     }
 
-
-    @Override
-    public void init() {
-        setHandlerPlayButton();
+    @FXML
+    public void mouseListenerSettings() {
+        playButton.setOnMouseClicked(event -> onSettingsButtonPressed());
     }
 
-    @Override
-    public void render() {
-        var root = stage.getScene().getRoot();
+    @FXML
+    public void mouseListenerExit() {
+        playButton.setOnMouseClicked(event -> onExitButtonPressed());
     }
 
-    private void loadApp() {
-        FXMLLoader appLoader =  new FXMLLoader(MenuView.class.getResource("app.fxml"));
-        System.out.println("CLICKED!");
+    private void onPlayButtonPressed() {
+        FXMLLoader gameLoader =  new FXMLLoader(MenuView.class.getResource("app.fxml"));
         try {
-            stage.setScene(new Scene(appLoader.load()));
+            stage.setScene(new Scene(gameLoader.load()));
         } catch (IOException e) {
             e.printStackTrace();
         }
+        GameView gameView = gameLoader.getController();
 
         stage.show();
     }
 
-//    @Override
-//    public void modelChanged(GameModel model) {
-//
-//    }
+    private void onSettingsButtonPressed() {
+        FXMLLoader gameLoader =  new FXMLLoader(MenuView.class.getResource("app.fxml"));
+        try {
+            stage.setScene(new Scene(gameLoader.load()));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        stage.show();
+    }
 
-//    private void listen() throws GameException {
-//        if (model != null) {
-//            model.listen(this);
-//        }
-//    }
-//
-//    private void noListen() {
-//        if (model != null) {
-//            model.noListen(this);
-//        }
-//    }
+    private void onExitButtonPressed() {
+        stage.close();
+
+    }
+
+
 }

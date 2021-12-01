@@ -17,18 +17,13 @@ public class Main extends Application{
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-
-        GameModel model = new GameModel();
         primaryStage.setTitle("My App");
         primaryStage.initStyle(StageStyle.DECORATED);
         primaryStage.setResizable(false);
         FXMLLoader menuLoader =  new FXMLLoader(MenuView.class.getResource("menu.fxml"));
         primaryStage.setScene(new Scene(menuLoader.load()));
-
         MenuView menuView = menuLoader.getController();
         menuView.setStage(primaryStage);
-        menuView.init();
-        menuView.render();
         primaryStage.show();
     }
 }

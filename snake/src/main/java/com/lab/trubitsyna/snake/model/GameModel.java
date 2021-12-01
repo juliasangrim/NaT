@@ -6,6 +6,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class GameModel implements IModel {
     private final CopyOnWriteArrayList<IListener> listeners = new CopyOnWriteArrayList<>();
+
+    Field field;
+    Snake snake;
+
     @Override
     public void updateModel() {
 
