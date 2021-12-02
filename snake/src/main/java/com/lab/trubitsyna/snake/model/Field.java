@@ -3,20 +3,27 @@ package com.lab.trubitsyna.snake.model;
 import com.lab.trubitsyna.snake.view.Tile;
 import lombok.Getter;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.HashSet;
+
 public class Field {
     private final static int FIND_WINDOW_SIZE = 5;
     private final static int LOCAL_MIDDLE = (FIND_WINDOW_SIZE - 1) / 2;
     @Getter
-    int width;
+    private int width;
     @Getter
-    int height;
-    Tile[] tileArray;
+    private int height;
+    private Tile[] tileArray;
+    @Getter
+    private ArrayList<Point> emptyPoints;
 
     Field(int width, int height) {
 
         this.width = width;
         this.height = height;
 
+        this.emptyPoints = new ArrayList<>();
         this.tileArray = new Tile[width * height];
     }
 
@@ -24,6 +31,7 @@ public class Field {
         for (int y = 0; y < this.height; ++y) {
             for (int x = 0; x < this.width; ++x) {
                 this.tileArray[y * width + x] = Tile.BOARD;
+                emptyPoints.add(new Point(x,y));
             }
         }
     }
@@ -63,6 +71,21 @@ public class Field {
         return middle;
     }
 
+    public int getAmountEmptyPoint() {
+        return emptyPoints.size();
+    }
+
+    public Point getEmptyPoint(int index){
+        return emptyPoints.get(index);
+    }
+    public void addEmptyPont(Point point) {
+        emptyPoints.add(point);
+    }
+
+    public void deleteEmptyPoint(Point point) {
+        emptyPoints.remove(point);
+    }
+
     public void setTile(Point point, Tile tile) {
         tileArray[point.getY() * width + point.getX()] = tile;
     }
@@ -70,5 +93,13 @@ public class Field {
     public boolean isPointFree(Point point) {
         return tileArray[point.getY() * width + point.getX()] == Tile.BOARD;
     }
+
+    public boolean isSnake(Point point) {
+        return  (tileArray[point.getY() * width + point.getX()] == Tile.SNAKE_BODY)
+                || (tileArray[point.getY() * width + point.getX()] == Tile.SNAKE_HEAD);
+    }
+
+
+
 }
 

@@ -19,7 +19,6 @@ public class GameView implements IView, IListener {
     @FXML
     Button exitButton;
 
-    GameModel model;
     Stage stage;
 
     void sendMessage() {}
@@ -37,15 +36,15 @@ public class GameView implements IView, IListener {
 
     }
 
-    private void listen() throws GameException {
-        if (model != null) {
-            model.listen(this);
+    private void listen(GameModel newModel) throws GameException {
+        if (newModel != null) {
+            newModel.addListener(this);
         }
     }
 
-    private void noListen() {
-        if (model != null) {
-            model.noListen(this);
+    private void noListen(GameModel oldModel) {
+        if (oldModel != null) {
+            oldModel.removeListener(this);
         }
     }
 
