@@ -1,7 +1,8 @@
 package com.lab.trubitsyna.snake.main;
 
-import com.lab.trubitsyna.snake.model.GameModel;
-import com.lab.trubitsyna.snake.view.MenuView;
+import com.lab.trubitsyna.snake.controller.MenuController;
+import com.lab.trubitsyna.snake.view.View;
+import com.lab.trubitsyna.snake.view.StateSystem;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -11,7 +12,6 @@ import javafx.stage.StageStyle;
 
 public class Main extends Application{
     public static void main(String[] args) {
-
         launch(args);
     }
 
@@ -20,10 +20,18 @@ public class Main extends Application{
         primaryStage.setTitle("My App");
         primaryStage.initStyle(StageStyle.DECORATED);
         primaryStage.setResizable(false);
-        FXMLLoader menuLoader =  new FXMLLoader(MenuView.class.getResource("menu.fxml"));
+        View menu = new View();
+
+        FXMLLoader menuLoader =  new FXMLLoader(View.class.getResource("menu.fxml"));
         primaryStage.setScene(new Scene(menuLoader.load()));
-        MenuView menuView = menuLoader.getController();
-        menuView.setStage(primaryStage);
+        MenuController menuController = menuLoader.getController();
+        menuController.setMenuView(menu);
+        menu.setStage(primaryStage);
+
+        menu.render(StateSystem.MENU);
         primaryStage.show();
     }
+
+
+
 }
