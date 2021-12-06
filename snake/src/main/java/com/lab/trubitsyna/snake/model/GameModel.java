@@ -8,7 +8,7 @@ import lombok.Getter;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class ServerGameModel implements IModel {
+public class GameModel implements IModel {
     private final static Random generator = new Random();
 
     private final CopyOnWriteArrayList<IListener> listeners = new CopyOnWriteArrayList<>();
@@ -21,6 +21,7 @@ public class ServerGameModel implements IModel {
     private ArrayList<SnakesProto.GameState.Snake> snakes;
     @Getter
     private Field field;
+    private String login;
     private HashSet<Food> food;
     private int amountFood;
     private int amountAliveSnakes = 0;
@@ -29,7 +30,7 @@ public class ServerGameModel implements IModel {
 
     }
 
-    public ServerGameModel(CustomGameConfig customConfig) {
+    public GameModel(CustomGameConfig customConfig) {
         this.players = new HashSet<>();
         this.snakes = new ArrayList<>();
         this.food = new HashSet<>();
@@ -43,25 +44,23 @@ public class ServerGameModel implements IModel {
                 .setPingDelayMs(customConfig.getPingDelay())
                 .setNodeTimeoutMs(customConfig.getNodeTimeout()).build();
         this.field = new Field(config.getWidth(), config.getHeight());
+        this.login = customConfig.getLogin();
     }
 
 
 
-    public void startGame(String login, SnakesProto.PlayerType playerType) throws GameException {
+    public void startGame() throws GameException {
 
-        //add admin to the players list
+        //add player to the players list
         var player = SnakesProto.GamePlayer.newBuilder().setName(login)
                 .setId(0).setIpAddress("").setPort(PORT)
-                .setRole(SnakesProto.NodeRole.MASTER).setType(playerType).setScore(0).build();
+                .setRole(SnakesProto.NodeRole.MASTER).setScore(0).build();
 
         players.add(player);
 
         addNewSnake(player.getId());
         amountFood = (config.getFoodStatic() + Math.round(config.getFoodPerPlayer()));
         spawnFood();
-
-        updateModel();
-
     }
 
     private void addNewSnake(int playerId) {
@@ -89,7 +88,7 @@ public class ServerGameModel implements IModel {
                 .setRole(player.getRole()).setType(player.getType()).setScore(0).build());
     }
 
-    private void updateModel() throws GameException {
+    public void updateModel() throws GameException {
         for (var snake : snakes) {
             var points = snake.getPointsList();
             var head = points.get(0);
@@ -127,7 +126,8 @@ public class ServerGameModel implements IModel {
 
 
     //notify listeners about changes
-    protected void notifyListeners() throws GameException {
+    @Override
+    public void notifyListeners() throws GameException {
         for (IListener listener : listeners) {
             notifyListener(listener);
         }
@@ -141,6 +141,7 @@ public class ServerGameModel implements IModel {
     }
 
     //method for following our model changes
+    @Override
     public void addListener(IListener listener) throws GameException {
         if (listener == null) {
             throw new NullPointerException("Empty param...");
@@ -153,6 +154,7 @@ public class ServerGameModel implements IModel {
     }
 
     //method for stop following our model changes
+    @Override
     public void removeListener(IListener listener) {
         if (listener == null) {
             throw new NullPointerException("Empty param...");
