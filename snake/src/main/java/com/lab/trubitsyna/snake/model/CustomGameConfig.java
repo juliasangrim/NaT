@@ -10,6 +10,8 @@ public class CustomGameConfig {
     private final Properties config;
 
     @Getter
+    private String login;
+    @Getter
     private int width;
     @Getter
     private int height;
@@ -30,6 +32,7 @@ public class CustomGameConfig {
         //for save changes of player settings
         this.config = getConfig();
 
+        this.login = config.getProperty("user");
         this.width = Integer.parseInt(config.getProperty("width"));
         this.height = Integer.parseInt(config.getProperty("height"));
         this.foodStatic = Integer.parseInt(config.getProperty("food_static"));
