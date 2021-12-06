@@ -7,6 +7,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+
 public class Field {
     private final static int FIND_WINDOW_SIZE = 5;
     private final static int LOCAL_MIDDLE = (FIND_WINDOW_SIZE - 1) / 2;
@@ -25,6 +26,7 @@ public class Field {
 
         this.emptyPoints = new ArrayList<>();
         this.tileArray = new Tile[width * height];
+        initField();
     }
 
     private void initField() {
@@ -47,6 +49,8 @@ public class Field {
         return true;
     }
 
+
+    //TODO: add checker for (-1,-1)
     public Point findEmptySpace() {
         //middle of the empty space
         Point middle = new Point(-1, -1);
@@ -89,6 +93,11 @@ public class Field {
     public void setTile(Point point, Tile tile) {
         tileArray[point.getY() * width + point.getX()] = tile;
     }
+
+    public Tile getTile(Point point) {
+        return tileArray[point.getY() * width + point.getX()];
+    }
+
 
     public boolean isPointFree(Point point) {
         return tileArray[point.getY() * width + point.getX()] == Tile.BOARD;

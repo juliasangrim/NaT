@@ -4,6 +4,8 @@ import com.lab.trubitsyna.snake.protoClass.SnakesProto;
 import lombok.Getter;
 import lombok.Setter;
 
+
+//class for convenient work with class Field
 public class Point {
     @Getter @Setter
     private int x;
@@ -18,5 +20,9 @@ public class Point {
     public SnakesProto.GameState.Coord convertPointToCoord() {
         return SnakesProto.GameState.Coord.newBuilder().setX(x).setY(y).build();
     }
+//
+//    public Point convertCoordToPoint() {
+//        return
+//    }
 
 }

@@ -1,48 +1,109 @@
 package com.lab.trubitsyna.snake.model;
 
 import com.lab.trubitsyna.snake.gameException.GameException;
+import com.lab.trubitsyna.snake.protoClass.SnakesProto;
 import com.lab.trubitsyna.snake.view.Tile;
+import lombok.Getter;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class GameModel implements IModel {
+public class ServerGameModel implements IModel {
     private final static Random generator = new Random();
 
     private final CopyOnWriteArrayList<IListener> listeners = new CopyOnWriteArrayList<>();
+    private static final int PORT = 8000;
+    private static final int ADMIN_ID = 0;
 
+    @Getter
+    private SnakesProto.GameConfig config;
+    private HashSet<SnakesProto.GamePlayer> players;
+    private ArrayList<SnakesProto.GameState.Snake> snakes;
+    @Getter
     private Field field;
-    private HashSet<Snake> snakes;
     private HashSet<Food> food;
     private int amountFood;
     private int amountAliveSnakes = 0;
 
+    public void changeConfig() {
 
-    public GameModel(int width, int height, int foodStatic, float foodPerPlayer, float deadFloatProb) throws GameException {
-        Field field = new Field(width, height);
-        snakes = new HashSet<>();
-        //TODO : make possibility add login
-        UserInfo admin = new UserInfo("admin", 0);
-        addNewPlayer(admin);
-        amountFood = foodStatic + Math.round(foodPerPlayer * amountAliveSnakes);
-        food = new HashSet<>();
-        initFood();
-        updateModel();
     }
 
-    public void addNewPlayer(UserInfo user) {
-        Snake snake = new Snake(field, user);
+    public ServerGameModel(CustomGameConfig customConfig) {
+        this.players = new HashSet<>();
+        this.snakes = new ArrayList<>();
+        this.food = new HashSet<>();
+        this.config = SnakesProto.GameConfig.newBuilder()
+                .setWidth(customConfig.getWidth())
+                .setHeight(customConfig.getHeight())
+                .setFoodStatic(customConfig.getFoodStatic())
+                .setFoodPerPlayer(customConfig.getFoodPerPlayer())
+                .setStateDelayMs(customConfig.getStateDelay())
+                .setDeadFoodProb(customConfig.getDeadProbFood())
+                .setPingDelayMs(customConfig.getPingDelay())
+                .setNodeTimeoutMs(customConfig.getNodeTimeout()).build();
+        this.field = new Field(config.getWidth(), config.getHeight());
+    }
+
+
+
+    public void startGame(String login, SnakesProto.PlayerType playerType) throws GameException {
+
+        //add admin to the players list
+        var player = SnakesProto.GamePlayer.newBuilder().setName(login)
+                .setId(0).setIpAddress("").setPort(PORT)
+                .setRole(SnakesProto.NodeRole.MASTER).setType(playerType).setScore(0).build();
+
+        players.add(player);
+
+        addNewSnake(player.getId());
+        amountFood = (config.getFoodStatic() + Math.round(config.getFoodPerPlayer()));
+        spawnFood();
+
+        updateModel();
+
+    }
+
+    private void addNewSnake(int playerId) {
+
+        var head = field.findEmptySpace();
+        //shift body down
+        var body = new Point(0, 1);
+
+        var snake = SnakesProto.GameState.Snake.newBuilder()
+                .setState(SnakesProto.GameState.Snake.SnakeState.ALIVE)
+                .setPlayerId(ADMIN_ID)
+                .setHeadDirection(SnakesProto.Direction.UP)
+                .addPoints(head.convertPointToCoord())
+                .addPoints(body.convertPointToCoord()).build();
         snakes.add(snake);
-        amountAliveSnakes++;
+
+        field.deleteEmptyPoint(head);
+        field.deleteEmptyPoint(new Point(head.getX() + body.getX(),
+                head.getY() + body.getY()));
+    }
+
+    public void addNewPlayer(SnakesProto.GamePlayer player) {
+        players.add(SnakesProto.GamePlayer.newBuilder().setName(player.getName())
+                .setId(player.getId()).setIpAddress(player.getIpAddress()).setPort(player.getPort())
+                .setRole(player.getRole()).setType(player.getType()).setScore(0).build());
     }
 
     private void updateModel() throws GameException {
         for (var snake : snakes) {
-            field.setTile(snake.getHead(), Tile.SNAKE_HEAD);
-            for (var point : snake.getBody()) {
-                field.setTile(point, Tile.SNAKE_BODY);
+            var points = snake.getPointsList();
+            var head = points.get(0);
+            //set tile for head
+            field.setTile(new Point(head.getX(), head.getY()), Tile.SNAKE_HEAD);
+            //set tiles for body
+            var oldPoint = head;
+            for (var point : points) {
+                if (point.equals(head)) {
+                    continue;
+                }
+                var pointWithShift = new Point(oldPoint.getX() + point.getX(), oldPoint.getY() + point.getY());
+                field.setTile(pointWithShift, Tile.SNAKE_BODY);
+                oldPoint = point;
             }
         }
         for (var singleFood : food) {
@@ -52,10 +113,15 @@ public class GameModel implements IModel {
     }
 
     //the first food spawning
-    private void initFood() {
+    private void spawnFood() throws GameException {
+        if (amountFood > field.getAmountEmptyPoint()) {
+            throw new GameException("too many food");
+        }
         for (int i = 0; i < amountFood; ++i) {
             int place = generator.nextInt(field.getAmountEmptyPoint());
             Food singleFood = new Food(field.getEmptyPoint(place));
+            food.add(singleFood);
+            field.deleteEmptyPoint(singleFood.getPlace());
         }
     }
 
