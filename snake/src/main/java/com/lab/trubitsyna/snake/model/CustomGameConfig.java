@@ -1,5 +1,6 @@
 package com.lab.trubitsyna.snake.model;
 
+import com.lab.trubitsyna.snake.backend.protoClass.SnakesProto;
 import lombok.Getter;
 
 import java.io.*;
@@ -85,7 +86,7 @@ public class CustomGameConfig {
         }
     }
     public void changeFoodPerPlayer(String newFoodPerPlayer) {
-        try (OutputStream output = new FileOutputStream("src/main/resources/config.properties")) {
+        try (OutputStream output =  new FileOutputStream("src/main/resources/config.properties")) {
             this.foodPerPlayer = Float.parseFloat(newFoodPerPlayer);
             config.setProperty("food_per_player", newFoodPerPlayer);
             config.store(output, null);
@@ -130,5 +131,11 @@ public class CustomGameConfig {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    SnakesProto.GameConfig convertToProto() {
+        return SnakesProto.GameConfig.newBuilder().setWidth(width).setHeight(height).
+                setFoodStatic(foodStatic).setFoodPerPlayer(foodPerPlayer).setStateDelayMs(stateDelay).
+                setDeadFoodProb(deadProbFood).setPingDelayMs(pingDelay).setNodeTimeoutMs(nodeTimeout).build();
     }
 }
