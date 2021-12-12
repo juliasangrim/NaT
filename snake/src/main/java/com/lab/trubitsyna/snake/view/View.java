@@ -1,24 +1,31 @@
 package com.lab.trubitsyna.snake.view;
 
+import com.lab.trubitsyna.snake.backend.protoClass.SnakesProto;
 import com.lab.trubitsyna.snake.controller.GameController;
 import com.lab.trubitsyna.snake.controller.IListenerView;
+import com.lab.trubitsyna.snake.controller.MenuController;
 import com.lab.trubitsyna.snake.gameException.GameException;
 import com.lab.trubitsyna.snake.model.*;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.VPos;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
+import javafx.scene.text.FontSmoothingType;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
+
 import lombok.Setter;
 
 
 public class View implements IListenerView {
-
     @Setter
     private Stage stage;
-
     private Canvas board;
+
+    private String serverInfo;
+    private SnakesProto.GameConfig config;
 
     public View(Stage stage) {
         this.stage = stage;
@@ -31,6 +38,10 @@ public class View implements IListenerView {
                 case NEW_GAME -> loadGame();
                 case MENU -> loadMenu();
                 case CONFIG -> loadSetting();
+                case JOIN_GAME -> loadJoinGame();
+                case LOAD_GAME -> loadInfoAboutConnection();
+                case ERROR_LOAD_GAME -> loadInfoAboutError();
+
             }
         }
         catch (Exception e) {
@@ -40,58 +51,107 @@ public class View implements IListenerView {
 
     }
 
+    @Override
+    public void sendServerInfoToGameController(String message) {
+        this.serverInfo = message;
+    }
+
+    @Override
+    public void sendConfigToGameController(SnakesProto.GameConfig config) {
+        this.config = config;
+    }
+
+    private void loadInfoAboutConnection() {
+        var gc = board.getGraphicsContext2D();
+        gc.clearRect(0, 0, board.getWidth(), board.getHeight());
+        gc.setTextAlign(TextAlignment.CENTER);
+        gc.setTextBaseline(VPos.CENTER);
+        gc.setFontSmoothingType(FontSmoothingType.LCD);
+        gc.fillText(
+                "CONNECTION....",
+                Math.round(board.getWidth()  / 2),
+                Math.round(board.getHeight() / 2)
+        );
+    }
+
+    private void loadInfoAboutError() {
+        var gc = board.getGraphicsContext2D();
+        gc.clearRect(0, 0, board.getWidth(), board.getHeight());
+        gc.setTextAlign(TextAlignment.CENTER);
+        gc.setTextBaseline(VPos.CENTER);
+        gc.setFontSmoothingType(FontSmoothingType.LCD);
+        gc.fillText(
+                "SORRY, BUT NUMBER OF PLAYERS EXCEEDED. PLEASE CONNECT LATER....",
+                Math.round(board.getWidth()  / 2),
+                Math.round(board.getHeight() / 2)
+        );
+    }
+
     private void loadGame() throws Exception{
         FXMLLoader gameLoader =  new FXMLLoader(View.class.getResource("app.fxml"));
         stage.setScene(new Scene(gameLoader.load()));
-        //TODO : it will be cool if i can move  to onPlayButtonPressed
+        stage.centerOnScreen();
+
         GameController controller = gameLoader.getController();
         board = controller.getBoard();
         controller.setGameView(this);
+        controller.setState(StateSystem.NEW_GAME);
         controller.start();
+        stage.setOnCloseRequest(t -> controller.onExitWindowButtonPressed());
     }
 
     public void loadMenu() throws Exception{
         FXMLLoader menuLoader =  new FXMLLoader(View.class.getResource("menu.fxml"));
         stage.setScene(new Scene(menuLoader.load()));
+        MenuController controller = menuLoader.getController();
+        controller.setMenuView(this);
+
+        controller.start();
+        stage.setOnCloseRequest(t -> controller.onExitButtonPressed());
     }
 
     private void loadSetting() throws Exception{
         FXMLLoader gameLoader =  new FXMLLoader(View.class.getResource("app.fxml"));
         stage.setScene(new Scene(gameLoader.load()));
+       // stage.setOnCloseRequest(t -> controller.onExitButtonPressed());
     }
 
-    private void drawBackground(GraphicsContext gc, Field field) {
-        //TODO: duplicated
-        int width = field.getWidth();
-        int height = field.getHeight();
+    private void loadJoinGame() throws Exception{
+        FXMLLoader gameLoader =  new FXMLLoader(View.class.getResource("app.fxml"));
+        stage.setScene(new Scene(gameLoader.load()));
+        stage.centerOnScreen();
 
-        double tile_width = board.getWidth() / width;
-        double tile_height = board.getHeight() / height;
-        ///
-        for (int y = 0; y < height; ++y) {
-            for (int x = 0; x < width; ++x) {
+        GameController controller = gameLoader.getController();
+        board = controller.getBoard();
+        controller.setGameView(this);
+        controller.setServerPort(Integer.parseInt(serverInfo.split("\n")[3].split(" ")[1]));
+        controller.setServerAddr(serverInfo.split("\n")[4].split(" ")[1]);
+        controller.setServerConfig(config);
+        controller.setState(StateSystem.JOIN_GAME);
+
+
+        controller.start();
+        stage.setOnCloseRequest(t -> controller.onExitWindowButtonPressed());
+    }
+
+    private void drawBackground(GraphicsContext gc, Field field, double tileSize) {
+        for (int y = 0; y <  field.getHeight(); ++y) {
+            for (int x = 0; x < field.getWidth(); ++x) {
                 Tile tile = field.getTile(new Point(x, y));
                 if ((x + y) % 2 == 0) {
                     gc.setFill(Color.LIGHTGOLDENRODYELLOW);
                 } else {
                     gc.setFill(Color.KHAKI);
                 }
-                gc.fillRect(x * tile_width, y * tile_height, tile_width, tile_height);
+                gc.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
             }
         }
 
     }
 
-    private void drawElements(GraphicsContext gc, Field field) {
-        //TODO : duplicated
-        int width = field.getWidth();
-        int height = field.getHeight();
-
-        double tile_width = board.getWidth() / width;
-        double tile_height = board.getHeight() / height;
-        ////
-        for (int y = 0; y < height; ++y) {
-            for (int x = 0; x < width; ++x) {
+    private void drawElements(GraphicsContext gc, Field field, double tileSize) {
+        for (int y = 0; y <  field.getHeight(); ++y) {
+            for (int x = 0; x < field.getWidth(); ++x) {
                 Tile tile = field.getTile(new Point(x, y));
                 if ( tile == Tile.SNAKE_HEAD || tile == Tile.SNAKE_BODY) {
                     gc.setFill(Color.GREEN);
@@ -103,17 +163,30 @@ public class View implements IListenerView {
                     gc.setFill(Color.RED);
                 }
                 if (tile != Tile.BOARD) {
-                    gc.fillOval(x * tile_width, y * tile_height, tile_width, tile_height);
+                    gc.fillOval(x * tileSize, y * tileSize, tileSize, tileSize);
                 }
             }
         }
     }
 
+    private double getTileSize(Field field) {
+        int width = field.getWidth();
+        int height = field.getHeight();
+        double tileSize;
+        if (width > height) {
+            tileSize = board.getWidth() / width;
+        } else {
+            tileSize = board.getHeight()/ height;
+        }
+        return tileSize;
+    }
+
     @Override
     public void modelChanged(GameModel model) {
         var gc = board.getGraphicsContext2D();
-        drawBackground(gc, model.getField());
-        drawElements(gc, model.getField());
+        var field = model.getField();
+        drawBackground(gc, field, getTileSize(field));
+        drawElements(gc, field, getTileSize(field));
 
     }
 
