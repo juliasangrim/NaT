@@ -4,5 +4,8 @@ public enum StateSystem {
     NEW_GAME,
     JOIN_GAME,
     MENU,
-    CONFIG
+    CONFIG,
+    LOAD_GAME,
+    ERROR_LOAD_GAME,
+    EXIT
 }
