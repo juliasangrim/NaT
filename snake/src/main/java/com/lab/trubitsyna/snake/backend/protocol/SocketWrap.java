@@ -1,25 +1,31 @@
 package com.lab.trubitsyna.snake.backend.protocol;
 
 import com.lab.trubitsyna.snake.backend.protoClass.SnakesProto;
+import lombok.Getter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.*;
 
 public class SocketWrap implements IOWrap {
+    private final Logger logger = LoggerFactory.getLogger("APP");
     private static final int MAX_SIZE = 8192;
+    @Getter
     private DatagramSocket socket;
-    private int port;
+
 
     public SocketWrap(DatagramSocket socket) throws SocketException {
         this.socket = socket;
-        this.port = socket.getPort();
     }
 
     @Override
-    public void send(SnakesProto.GameMessage message, String receiver) {
+    public void send(SnakesProto.GameMessage message, String receiver, int receiverPort) {
         try {
+            logger.info("Creating packet...");
             InetAddress addr = InetAddress.getByName(receiver);
-            var packet = new DatagramPacket(message.toByteArray(), message.getSerializedSize(), addr, port);
+            var packet = new DatagramPacket(message.toByteArray(), message.getSerializedSize(), addr, receiverPort);
+            logger.info("Send to " + addr + ", "+ receiverPort);
             socket.send(packet);
         } catch (IOException e) {
             e.printStackTrace();
@@ -32,8 +38,11 @@ public class SocketWrap implements IOWrap {
             byte[] receiveRowByte = new byte[MAX_SIZE];
             DatagramPacket packet = new DatagramPacket(receiveRowByte, receiveRowByte.length);
             socket.receive(packet);
+            //get the message from array(bc packet.getData() return all bytes(include zero bytes))
+            byte[] receivedBytes = new byte[packet.getLength()];
+            System.arraycopy(receiveRowByte, 0, receivedBytes, 0, packet.getLength());
 
-            return new GameMessageWrap(packet.getAddress(), SnakesProto.GameMessage.parseFrom(packet.getData()));
+            return new GameMessageWrap(SnakesProto.GameMessage.parseFrom(receivedBytes), packet.getAddress().getHostAddress(), packet.getPort());
         } catch (IOException e) {
             e.printStackTrace();
         }
