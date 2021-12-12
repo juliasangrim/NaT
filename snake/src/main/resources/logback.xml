@@ -1,7 +1,7 @@
 <configuration>
     <appender name="APP" class="ch.qos.logback.core.FileAppender">
         <file>log/app.log</file>
-        <append>false</append>
+        <append>true</append>
         <encoder>
             <pattern>%d [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
