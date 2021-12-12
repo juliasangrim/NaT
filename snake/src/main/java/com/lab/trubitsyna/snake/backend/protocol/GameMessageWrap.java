@@ -5,18 +5,26 @@ import lombok.Getter;
 
 import java.net.InetAddress;
 
-public class GameMessageWrap implements MsgWrap {
+public class GameMessageWrap {
     @Getter
-    private InetAddress senderAddr;
+    private String senderAddr;
+    @Getter
+    private int port;
     @Getter
     private SnakesProto.GameMessage message;
 
-    public GameMessageWrap(InetAddress senderAddr, SnakesProto.GameMessage message) {
+    @Getter
+    private SnakesProto.GameMessage.AnnouncementMsg announcementMsg;
+
+
+
+    public GameMessageWrap(SnakesProto.GameMessage message, String senderAddr, int port) {
         this.senderAddr = senderAddr;
         this.message = message;
+        this.port = port;
     }
 
-    @Override
+
     public void parseMessage() {
     }
 }
