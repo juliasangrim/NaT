@@ -18,12 +18,14 @@ public class Field {
     private Tile[] tileArray;
     @Getter
     private ArrayList<Point> emptyPoints;
+    @Getter
+    private boolean isThereFreeSpace;
 
     Field(int width, int height) {
 
         this.width = width;
         this.height = height;
-
+        this.isThereFreeSpace = true;
         this.emptyPoints = new ArrayList<>();
         this.tileArray = new Tile[width * height];
         initField();
@@ -41,7 +43,7 @@ public class Field {
     private boolean isFree(Point begin, Point end) {
         for (int y = begin.getY(); y < end.getY(); ++y) {
             for (int x = begin.getX(); x < end.getX(); ++x) {
-                if (tileArray[y * FIND_WINDOW_SIZE + x] != Tile.BOARD) {
+                if (!isPointFree(new Point(x, y))) {
                     return false;
                 }
             }
@@ -49,8 +51,17 @@ public class Field {
         return true;
     }
 
+    public int countFood() {
+        int foodOnField = 0;
+        for (var tile : tileArray) {
+            if (tile == Tile.FOOD) {
+              ++foodOnField;
+            }
+        }
+        return foodOnField;
+    }
 
-    //TODO: add checker for (-1,-1)
+
     public Point findEmptySpace() {
         //middle of the empty space
         Point middle = new Point(-1, -1);
@@ -65,10 +76,13 @@ public class Field {
                 endWindow.setX(xWindow + FIND_WINDOW_SIZE);
                 endWindow.setY(yWindow + FIND_WINDOW_SIZE);
                 if (isFree(beginWindow, endWindow)) {
+                    isThereFreeSpace = true;
                     // find free window
                     middle.setX(beginWindow.getX() + LOCAL_MIDDLE);
                     middle.setY(beginWindow.getY() + LOCAL_MIDDLE);
                     return middle;
+                } else {
+                    isThereFreeSpace = false;
                 }
             }
         }
@@ -98,6 +112,10 @@ public class Field {
         return tileArray[point.getY() * width + point.getX()];
     }
 
+    public Tile getTile(int x, int y) {
+        return tileArray[y * width + x];
+    }
+
 
     public boolean isPointFree(Point point) {
         return tileArray[point.getY() * width + point.getX()] == Tile.BOARD;
@@ -105,7 +123,7 @@ public class Field {
 
     public boolean isSnake(Point point) {
         return  (tileArray[point.getY() * width + point.getX()] == Tile.SNAKE_BODY)
-                || (tileArray[point.getY() * width + point.getX()] == Tile.SNAKE_HEAD);
+                || tileArray[point.getY() * width + point.getX()] == Tile.SNAKE_HEAD || tileArray[point.getY() * width + point.getX()] == Tile.MY_SNAKE_HEAD;
     }
 
 
