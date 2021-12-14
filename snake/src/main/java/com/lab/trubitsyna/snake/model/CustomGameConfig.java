@@ -8,7 +8,7 @@ import java.util.Properties;
 
 public class CustomGameConfig {
 
-    private final Properties config;
+    private Properties config;
 
     @Getter
     private String login;
@@ -30,9 +30,10 @@ public class CustomGameConfig {
     private int nodeTimeout;
 
     public CustomGameConfig() {
-        //for save changes of player settings
-        this.config = getConfig();
+    }
 
+    public void initConfig() {
+        this.config = getConfig();
         this.login = config.getProperty("user");
         this.width = Integer.parseInt(config.getProperty("width"));
         this.height = Integer.parseInt(config.getProperty("height"));
@@ -42,8 +43,8 @@ public class CustomGameConfig {
         this.deadProbFood = Float.parseFloat(config.getProperty("dead_prob_food"));
         this.pingDelay = Integer.parseInt(config.getProperty("ping_delay_ms"));
         this.nodeTimeout = Integer.parseInt(config.getProperty("node_timeout_ms"));
-    }
 
+    }
 
 
     private Properties getConfig() {
@@ -133,9 +134,14 @@ public class CustomGameConfig {
         }
     }
 
-    SnakesProto.GameConfig convertToProto() {
+    public SnakesProto.GameConfig convertToProto() {
         return SnakesProto.GameConfig.newBuilder().setWidth(width).setHeight(height).
                 setFoodStatic(foodStatic).setFoodPerPlayer(foodPerPlayer).setStateDelayMs(stateDelay).
                 setDeadFoodProb(deadProbFood).setPingDelayMs(pingDelay).setNodeTimeoutMs(nodeTimeout).build();
+    }
+
+    public void convertFromProto(SnakesProto.GameConfig protoConfig) {
+
+
     }
 }
