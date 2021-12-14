@@ -1,6 +1,7 @@
 package com.lab.trubitsyna.snake.backend.handlers;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.lab.trubitsyna.snake.MyLogger;
 import com.lab.trubitsyna.snake.backend.node.NetNode;
 import com.lab.trubitsyna.snake.backend.protoClass.SnakesProto;
 import lombok.Getter;
@@ -11,7 +12,7 @@ import java.io.IOException;
 import java.net.*;
 
 public class MulticastReciever {
-    private final static Logger logger = LoggerFactory.getLogger("APP");
+    //private final static Logger logger = LoggerFactory.getLogger("APP");
     private final static int SIZE = 8192;
     private final static int TIMEOUT_MS = 2000;
 
@@ -26,19 +27,19 @@ public class MulticastReciever {
         this.client = client;
         this.mcPort = mcPort;
         this.mcAddr = mcAddr;
-        logger.info("Create a multicast receiver.");
+        MyLogger.getLogger().info("Create a multicast receiver.");
     }
 
     public void init() {
         try {
-            logger.info("Creation MC socket...");
+        //    logger.info("Creation MC socket...");
             this.socket = new MulticastSocket(mcPort);
-            logger.info("Create MC socket!");
+        //    logger.info("Create MC socket!");
             socket.setSoTimeout(TIMEOUT_MS);
             InetAddress group = InetAddress.getByName(mcAddr);
-            logger.info("Joining to group...");
+        //    logger.info("Joining to group...");
             socket.joinGroup(group);
-            logger.info("Join to group successfully!");
+        //    logger.info("Join to group successfully!");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -47,10 +48,10 @@ public class MulticastReciever {
     public void run() {
         DatagramPacket packet = new DatagramPacket(buf, buf.length);
         try {
-            logger.info("Receiving announcement message...");
+       //     logger.info("Receiving announcement message...");
             socket.receive(packet);
         } catch (SocketTimeoutException ignore) {
-            logger.info("Socket timeout!");
+            MyLogger.getLogger().info("Socket timeout!");
             client.checkAliveServers();
             return;
         } catch (IOException unknownHostException) {
@@ -60,7 +61,7 @@ public class MulticastReciever {
         //get the message from array(bc packet.getData() return all bytes(include zero bytes))
         byte[] receivedBytes = new byte[packet.getLength()];
         System.arraycopy(buf, 0, receivedBytes, 0, packet.getLength());
-        logger.info("Receive message successfully!");
+      //  logger.info("Receive message successfully!");
         try {
             client.changeListAvailableServer(SnakesProto.GameMessage.parseFrom(receivedBytes).getAnnouncement(), packet.getPort(), packet.getAddress());
             client.checkAliveServers();
@@ -73,11 +74,11 @@ public class MulticastReciever {
     public void close() {
         try {
             InetAddress group = InetAddress.getByName(mcAddr);
-            logger.info("Leaving group....");
+            MyLogger.getLogger().info("Leaving group....");
             socket.leaveGroup(group);
-            logger.info("Leave group successfully");
+            MyLogger.getLogger().info("Leave group successfully");
             socket.close();
-            logger.info("Close MC socket!");
+            MyLogger.getLogger().info("Close MC socket!");
             } catch (IOException e) {
             socket.close();
             e.printStackTrace();
