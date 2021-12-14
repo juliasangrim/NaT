@@ -1,5 +1,6 @@
 package com.lab.trubitsyna.snake.backend.node;
 
+import com.lab.trubitsyna.snake.MyLogger;
 import com.lab.trubitsyna.snake.backend.protoClass.SnakesProto;
 import com.lab.trubitsyna.snake.backend.protocol.SocketWrap;
 import com.lab.trubitsyna.snake.model.CustomGameConfig;
@@ -19,9 +20,9 @@ import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class NetNode implements INetHandler {
-    public static final int TIMEOUT_MS = 2000;
+    public static final int TIMEOUT_MS = 10000;
 
-    private final Logger logger = LoggerFactory.getLogger("APP");
+    //private final Logger logger = MyLogger.getLogger();
     //sorry for that
     @Setter
     private IView gameView;
@@ -60,16 +61,23 @@ public class NetNode implements INetHandler {
 
     @Override
     public void sender(SnakesProto.GamePlayer player, SnakesProto.GameMessage message) {
+        if (socket == null) {
+            MyLogger.getLogger().error("SOCKET IS NULL!!!");
+            return;
+        }
         switch (message.getTypeCase()) {
             case ACK -> {}
             case JOIN -> {
                 sentMessages.put(message.getMsgSeq(), message);
                 while (sentMessages.containsKey(message.getMsgSeq())) {
-                    logger.info(String.format("Sending join message to %s %s...", serverAddr, serverPort));
+                    System.out.println("SIZE " + sentMessages.size());
+                    MyLogger.getLogger().info(String.format("Sending join message to %s %s...", serverAddr, serverPort));
                     socket.send(message, serverAddr, serverPort);
-                    logger.info("Send join message successfully!");
+                    MyLogger.getLogger().info("Send join message successfully! SeqNum : " + message.getMsgSeq());
                     try {
-                        Thread.sleep(config.getPingDelayMs());
+                        MyLogger.getLogger().info("SLEEP");
+                        Thread.sleep(TIMEOUT_MS);
+                        MyLogger.getLogger().info("AWAKE!");
                     } catch (InterruptedException ignored) {
                     }
                 }
@@ -86,10 +94,14 @@ public class NetNode implements INetHandler {
 
     @Override
     public void receiver() {
+        if (socket == null) {
+            MyLogger.getLogger().error("SOCKET IS NULL!!!");
+            return;
+        }
         //TODO: socket timeout????
-        logger.info("Receiving message on client ....");
+        MyLogger.getLogger().info("Receiving message on client ....");
         var receivedMessage = socket.receive();
-        logger.info("Receive message on client successfully!");
+        MyLogger.getLogger().info("Receive message on client successfully!");
         long seqNumRecv = receivedMessage.getMessage().getMsgSeq();
         switch (receivedMessage.getMessage().getTypeCase()) {
             case ACK -> {
@@ -102,9 +114,11 @@ public class NetNode implements INetHandler {
 
                     }
                     case JOIN -> {
-                        myId = receivedMessage.getMessage().getReceiverId();
                         sentMessages.remove(seqNumRecv);
-                        Platform.runLater(()->gameView.render(StateSystem.ERROR_LOAD_GAME));
+                        System.out.println(sentMessages.size());
+                        myId = receivedMessage.getMessage().getReceiverId();
+                        MyLogger.getLogger().info("Client get ack message with seqNum: " + seqNumRecv);
+                        Platform.runLater(()->gameView.render(StateSystem.ERROR_LOAD_GAME, "CONNECT!"));
                     }
 
                     case PING -> {
@@ -118,7 +132,7 @@ public class NetNode implements INetHandler {
             case PING -> {}
             case ERROR -> {
                 sentMessages.remove(receivedMessage.getMessage().getMsgSeq());
-                Platform.runLater(()->gameView.render(StateSystem.ERROR_LOAD_GAME));
+                Platform.runLater(()->gameView.render(StateSystem.ERROR_LOAD_GAME, receivedMessage.getMessage().getError().getErrorMessage()));
             }
             case STEER -> {
 
@@ -132,9 +146,9 @@ public class NetNode implements INetHandler {
     @Override
     public void start() {
         try {
-            logger.info("Creation client unicast socket...");
+            MyLogger.getLogger().info("Creation client unicast socket...");
             socket = new SocketWrap(new DatagramSocket());
-            logger.info("Create client unicast socket successfully!");
+            MyLogger.getLogger().info("Create client unicast socket successfully!");
         } catch (SocketException e) {
             e.printStackTrace();
         }
@@ -142,14 +156,19 @@ public class NetNode implements INetHandler {
 
     @Override
     public void end() {
+        if (socket == null) {
+            MyLogger.getLogger().error("SOCKET IS NULL!!!");
+            return;
+        }
         socket.getSocket().close();
         //close socket and smth
     }
 
     public void checkAliveServers() {
-        logger.info("Check available servers.");
+        //logger.info("Check available servers.");
         for (var game: availableGames.keySet()) {
             if (System.currentTimeMillis() - availableGames.get(game).getValue() > TIMEOUT_MS) {
+                MyLogger.getLogger().info("Disconnect " + game.getKey() + " " + game.getValue());
                 availableGames.remove(game);
                 isMapChange = true;
             }
@@ -157,7 +176,15 @@ public class NetNode implements INetHandler {
     }
 
     public void changeListAvailableServer(SnakesProto.GameMessage.AnnouncementMsg server, int port, InetAddress ip) {
-        isMapChange = availableGames.put(new Pair<>(port, ip), new Pair<>(server, System.currentTimeMillis())) == null;
+//        isMapChange =  availableGames.put(new Pair<>(port, ip), new Pair<>(server, System.currentTimeMillis())) == null;
+        if (!availableGames.containsKey(new Pair<>(port, ip))) {
+            availableGames.put(new Pair<>(port, ip), new Pair<>(server, System.currentTimeMillis()));
+            MyLogger.getLogger().info("Connect " + port + " " + ip);
+            isMapChange = true;
+        } else {
+            availableGames.put(new Pair<>(port, ip), new Pair<>(server, System.currentTimeMillis()));
+            isMapChange = false;
+        }
     }
 
 

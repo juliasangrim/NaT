@@ -1,8 +1,10 @@
 package com.lab.trubitsyna.snake.backend.node;
 
+import com.lab.trubitsyna.snake.MyLogger;
 import com.lab.trubitsyna.snake.backend.handlers.MulticastSender;
 import com.lab.trubitsyna.snake.backend.protoClass.SnakesProto;
 import com.lab.trubitsyna.snake.backend.protocol.SocketWrap;
+import com.lab.trubitsyna.snake.gameException.GameException;
 import com.lab.trubitsyna.snake.model.CustomGameConfig;
 import com.lab.trubitsyna.snake.model.GameModel;
 import lombok.Getter;
@@ -12,13 +14,15 @@ import org.slf4j.LoggerFactory;
 
 import java.net.DatagramSocket;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class MasterNetNode implements INetHandler {
-    private final Logger logger = LoggerFactory.getLogger("APP");
+    //private final Logger logger = LoggerFactory.getLogger("APP");
     private final ScheduledExecutorService threadPool = Executors.newScheduledThreadPool(1);
     @Getter
     private long seqNum;
@@ -27,7 +31,8 @@ public class MasterNetNode implements INetHandler {
     private SnakesProto.GameMessage.AnnouncementMsg announcementMsg;
 
     private String name;
-    private ArrayList<SnakesProto.GamePlayer> players;
+    @Getter
+    private CopyOnWriteArrayList<SnakesProto.GamePlayer> players;
     private MulticastSender multicastSender;
     private SnakesProto.NodeRole role;
     private SocketWrap socket;
@@ -35,6 +40,7 @@ public class MasterNetNode implements INetHandler {
     private int myId;
     private int currId;
     private GameModel model;
+    private boolean isError;
 
     public MasterNetNode(CustomGameConfig config, SnakesProto.NodeRole role, GameModel model, int id) {
         this.name = config.getLogin();
@@ -44,7 +50,8 @@ public class MasterNetNode implements INetHandler {
         this.model = model;
         this.myId = id;
         this.currId = id;
-        this.players = new ArrayList<>();
+        this.players = new CopyOnWriteArrayList<>();
+        this.isError = false;
     }
 
     private synchronized void incrementSeqNum() {
@@ -53,45 +60,79 @@ public class MasterNetNode implements INetHandler {
 
     @Override
     public void sender(SnakesProto.GamePlayer player, SnakesProto.GameMessage message) {
-            switch (message.getTypeCase()) {
-                case ACK -> {
-                }
-                case PING -> {
-                }
-                case ERROR -> {
-                }
-                case STEER -> {
-                }
-                case STATE -> {
-                }
-                case ROLE_CHANGE -> {
-                }
-                case ANNOUNCEMENT -> {
-                }
+        if (socket == null) {
+            MyLogger.getLogger().error("SOCKET IS NULL!!!");
+            return;
+        }
+        switch (message.getTypeCase()) {
+            case ACK -> {
             }
-            socket.send(message,  player.getIpAddress(), player.getPort());
+            case PING -> {
+            }
+            case ERROR -> {
+            }
+            case STEER -> {
+            }
+            case STATE -> {
+            }
+            case ROLE_CHANGE -> {
+            }
+            case ANNOUNCEMENT -> {
+            }
+        }
+        socket.send(message, player.getIpAddress(), player.getPort());
     }
 
     @Override
     public void receiver() {
+        if (socket == null) {
+            MyLogger.getLogger().error("SOCKET IS NULL!!!");
+            return;
+        }
+        MyLogger.getLogger().info("Receiving message from client...");
         var message = socket.receive();
+        if (message == null) {
+            MyLogger.getLogger().info("Message is null");
+            return;
+        }
+        MyLogger.getLogger().info("Receive message on server with seqNum " + message.getMessage().getMsgSeq());
         switch (message.getMessage().getTypeCase()) {
             case ACK -> {
             }
             case JOIN -> {
                 var newPlayer = addNewPlayer(message.getMessage().getJoin().getName(),
                         message.getSenderAddr(), message.getPort());
-                logger.info("Sending ack message on server ...");
-                socket.send(getAckMessage(message.getMessage().getMsgSeq(), newPlayer.getId()),
-                        newPlayer.getIpAddress(), newPlayer.getPort());
-                logger.info("Send ack message on server successfully!");
+                //can add player
+                if (!isError) {
+                    MyLogger.getLogger().info("Sending ack message on server ...");
+                    socket.send(getAckMessage(message.getMessage().getMsgSeq(), newPlayer.getId()),
+                            newPlayer.getIpAddress(), newPlayer.getPort());
+                    MyLogger.getLogger().info("Send ack message on server successfully!");
+                    model.updateModel();
+
+                } else {
+                    //can't add player
+                    MyLogger.getLogger().info("Sending error message on server ...");
+                    socket.send(getErrorMessage(message.getMessage().getMsgSeq(), "SORRY, BUT NUMBER OF PLAYERS EXCEEDED. PLEASE CONNECT LATER...."),
+                            newPlayer.getIpAddress(), newPlayer.getPort());
+                    MyLogger.getLogger().info("Send error message on server successfully!");
+                }
             }
-            case PING -> {}
-            case ERROR -> {}
-            case STEER -> {}
-            case STATE -> {}
-            case ROLE_CHANGE -> {}
-            case ANNOUNCEMENT -> {}
+            case PING -> {
+            }
+            case ERROR -> {
+            }
+            case STEER -> {
+            }
+            case STATE -> {
+            }
+            case ROLE_CHANGE -> {
+            }
+            case ANNOUNCEMENT -> {
+            }
+            default -> {
+                MyLogger.getLogger().info("Message of unknown type");
+            }
         }
     }
 
@@ -103,9 +144,10 @@ public class MasterNetNode implements INetHandler {
     @Override
     public void start() {
         try {
-            logger.info("Creation server unicast socket...");
+            MyLogger.getLogger().info("Creation server unicast socket...");
             this.socket = new SocketWrap(new DatagramSocket());
-            logger.info("Create server unicast socket successfully!");
+            socket.getSocket().setSoTimeout(500);
+            MyLogger.getLogger().info(String.format("Create server unicast socket successfully! Port=%d, Address=%s", socket.getSocket().getLocalPort(), socket.getSocket().getInetAddress()));
         } catch (SocketException e) {
             e.printStackTrace();
         }
@@ -116,23 +158,23 @@ public class MasterNetNode implements INetHandler {
         var mainPlayer = getMainPlayer();
         model.addNewPlayer(mainPlayer);
         players.add(mainPlayer);
+        model.updateModel();
         createAnnouncementMessage();
     }
 
     public void end() {
         threadPool.shutdown();
-        logger.info("Thread pool for McSender shutdown!");
+        MyLogger.getLogger().info("Thread pool for McSender shutdown!");
         socket.getSocket().close();
-        logger.info("Close server unicast socket!");
+        MyLogger.getLogger().info("Close server unicast socket!");
     }
 
     public SnakesProto.GameMessage getAnnouncementMessage() {
-        logger.info("Getting message ...");
+        MyLogger.getLogger().info("Getting message ...");
         var sendMessage = SnakesProto.GameMessage.newBuilder().setAnnouncement(announcementMsg).setMsgSeq(seqNum).build();
         incrementSeqNum();
         return sendMessage;
     }
-
 
 
     public void createAnnouncementMessage() {
@@ -146,12 +188,21 @@ public class MasterNetNode implements INetHandler {
         return SnakesProto.GameMessage.newBuilder().setAck(ackMessage).setMsgSeq(msgSeq).setSenderId(myId).setReceiverId(receiverId).build();
     }
 
+    public SnakesProto.GameMessage getErrorMessage(long msgSeq, String error) {
+        var errorMsg = SnakesProto.GameMessage.ErrorMsg.newBuilder().setErrorMessage(error).build();
+        return SnakesProto.GameMessage.newBuilder().setError(errorMsg).setMsgSeq(msgSeq).setSenderId(myId).build();
+    }
+
     private SnakesProto.GamePlayer addNewPlayer(String name, String ipAddress, int port) {
         var player = SnakesProto.GamePlayer.newBuilder().setName(name)
                 .setId(++currId).setIpAddress(ipAddress).setPort(port)
                 .setRole(SnakesProto.NodeRole.NORMAL).setScore(0).build();
-        players.add(player);
-        model.addNewPlayer(player);
+        if (model.addNewPlayer(player)) {
+            players.add(player);
+            isError = false;
+        } else {
+            isError = true;
+        }
         return player;
     }
 
