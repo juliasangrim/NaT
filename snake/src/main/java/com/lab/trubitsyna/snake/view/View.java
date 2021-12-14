@@ -11,6 +11,7 @@ import javafx.geometry.VPos;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import javafx.scene.text.FontSmoothingType;
 import javafx.scene.text.TextAlignment;
@@ -32,7 +33,7 @@ public class View implements IListenerView {
     }
 
     @Override
-    public void render(StateSystem stateSystem) {
+    public void render(StateSystem stateSystem, String message) {
         try {
             switch (stateSystem) {
                 case NEW_GAME -> loadGame();
@@ -40,7 +41,7 @@ public class View implements IListenerView {
                 case CONFIG -> loadSetting();
                 case JOIN_GAME -> loadJoinGame();
                 case LOAD_GAME -> loadInfoAboutConnection();
-                case ERROR_LOAD_GAME -> loadInfoAboutError();
+                case ERROR_LOAD_GAME -> loadInfoAboutError(message);
 
             }
         }
@@ -74,14 +75,14 @@ public class View implements IListenerView {
         );
     }
 
-    private void loadInfoAboutError() {
+    private void loadInfoAboutError(String message) {
         var gc = board.getGraphicsContext2D();
         gc.clearRect(0, 0, board.getWidth(), board.getHeight());
         gc.setTextAlign(TextAlignment.CENTER);
         gc.setTextBaseline(VPos.CENTER);
         gc.setFontSmoothingType(FontSmoothingType.LCD);
         gc.fillText(
-                "SORRY, BUT NUMBER OF PLAYERS EXCEEDED. PLEASE CONNECT LATER....",
+                message,
                 Math.round(board.getWidth()  / 2),
                 Math.round(board.getHeight() / 2)
         );
@@ -137,7 +138,6 @@ public class View implements IListenerView {
     private void drawBackground(GraphicsContext gc, Field field, double tileSize) {
         for (int y = 0; y <  field.getHeight(); ++y) {
             for (int x = 0; x < field.getWidth(); ++x) {
-                Tile tile = field.getTile(new Point(x, y));
                 if ((x + y) % 2 == 0) {
                     gc.setFill(Color.LIGHTGOLDENRODYELLOW);
                 } else {
@@ -153,16 +153,16 @@ public class View implements IListenerView {
         for (int y = 0; y <  field.getHeight(); ++y) {
             for (int x = 0; x < field.getWidth(); ++x) {
                 Tile tile = field.getTile(new Point(x, y));
-                if ( tile == Tile.SNAKE_HEAD || tile == Tile.SNAKE_BODY) {
-                    gc.setFill(Color.GREEN);
-                }
-                if (tile == Tile.MY_SNAKE_HEAD) {
-                    gc.setFill(Color.DARKGREEN);
+                if (tile == Tile.SNAKE_HEAD) {
+                    gc.setFill(Color.MEDIUMPURPLE);
+                }                if (tile == Tile.SNAKE_BODY) {
+                    gc.setFill(Color.LIMEGREEN);
                 }
                 if (tile == Tile.FOOD) {
-                    gc.setFill(Color.RED);
+                    var image = new Image("pngegg.png");
+                    gc.drawImage(image, x * tileSize, y * tileSize, tileSize, tileSize);
                 }
-                if (tile != Tile.BOARD) {
+                if (tile != Tile.BOARD && tile != Tile.FOOD) {
                     gc.fillOval(x * tileSize, y * tileSize, tileSize, tileSize);
                 }
             }
