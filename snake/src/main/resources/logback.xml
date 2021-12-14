@@ -1,12 +1,21 @@
 <configuration>
-    <appender name="APP" class="ch.qos.logback.core.FileAppender">
-        <file>log/app.log</file>
-        <append>true</append>
-        <encoder>
-            <pattern>%d [%thread] %-5level %logger{36} - %msg%n</pattern>
-        </encoder>
+    <appender name="APP" class="ch.qos.logback.classic.sift.SiftingAppender">
+        <discriminator class="ch.qos.logback.classic.sift.MDCBasedDiscriminator">
+            <key>userid</key>
+            <defaultValue>unknown</defaultValue>
+        </discriminator>
+        <sift>
+            <appender name="FILE-${userid}" class="ch.qos.logback.core.FileAppender">
+                <file>log/user_${userid}.log</file>
+                <append>false</append>
+                <layout class="ch.qos.logback.classic.PatternLayout">
+                    <pattern>%d [%thread] %level - %msg%n%caller{1}</pattern>
+                </layout>
+            </appender>
+        </sift>
     </appender>
-    <logger name="APP" level="info">
+
+    <root level="info">
         <appender-ref ref="APP" />
-    </logger>
+    </root>
 </configuration>
