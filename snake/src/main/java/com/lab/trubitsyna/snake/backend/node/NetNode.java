@@ -3,33 +3,23 @@ package com.lab.trubitsyna.snake.backend.node;
 import com.lab.trubitsyna.snake.MyLogger;
 import com.lab.trubitsyna.snake.backend.protoClass.SnakesProto;
 import com.lab.trubitsyna.snake.backend.protocol.SocketWrap;
-import com.lab.trubitsyna.snake.model.CustomGameConfig;
 import com.lab.trubitsyna.snake.view.IView;
 import com.lab.trubitsyna.snake.view.StateSystem;
 import javafx.application.Platform;
-import javafx.util.Pair;
 import lombok.Getter;
 import lombok.Setter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.net.SocketException;
-import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class NetNode implements INetHandler {
     public static final int TIMEOUT_MS = 10000;
-
-    //private final Logger logger = MyLogger.getLogger();
-    //sorry for that
+    public final ExecutorService communicationThreadPool = Executors.newCachedThreadPool();
     @Setter
     private IView gameView;
-    @Getter
-    private ConcurrentHashMap<Pair<Integer, InetAddress>, Pair<SnakesProto.GameMessage.AnnouncementMsg, Long>> availableGames;
-    @Getter
-    private boolean isMapChange = true;
     @Getter
     private long seqNum;
     @Setter
@@ -39,20 +29,22 @@ public class NetNode implements INetHandler {
     private ConcurrentHashMap<Long, SnakesProto.GameMessage> sentMessages = new ConcurrentHashMap<>();
     private SnakesProto.GameConfig config;
     private int myId;
+    private String name;
+
+    private StateSystem state = StateSystem.JOIN_GAME;
+
 
     private int serverPort;
     private String serverAddr;
 
-    public NetNode() {
-        this.availableGames = new ConcurrentHashMap<>();
-    }
-    public NetNode(IView gameView, SnakesProto.GameConfig config, SnakesProto.NodeRole role, String serverAddr, int serverPort) {
+    public NetNode(IView gameView, SnakesProto.GameConfig config, SnakesProto.NodeRole role, String serverAddr, int serverPort, String name) {
         this.config = config;
         this.seqNum = 0;
         this.serverAddr = serverAddr;
         this.serverPort = serverPort;
         this.role = role;
         this.gameView = gameView;
+        this.name = name;
     }
 
     public synchronized void incrementSeqNum() {
@@ -66,11 +58,13 @@ public class NetNode implements INetHandler {
             return;
         }
         switch (message.getTypeCase()) {
-            case ACK -> {}
+            case ACK -> {
+                socket.send(message, serverAddr, serverPort);
+            }
             case JOIN -> {
                 sentMessages.put(message.getMsgSeq(), message);
                 while (sentMessages.containsKey(message.getMsgSeq())) {
-                    System.out.println("SIZE " + sentMessages.size());
+                    MyLogger.getLogger().info("SIZE AFTER WHILE" + sentMessages.size());
                     MyLogger.getLogger().info(String.format("Sending join message to %s %s...", serverAddr, serverPort));
                     socket.send(message, serverAddr, serverPort);
                     MyLogger.getLogger().info("Send join message successfully! SeqNum : " + message.getMsgSeq());
@@ -84,12 +78,44 @@ public class NetNode implements INetHandler {
             }
             case PING -> {}
             case ERROR -> {}
-            case STEER -> {}
+            case STEER -> {
+                sentMessages.put(message.getMsgSeq(), message);
+                while (sentMessages.containsKey(message.getMsgSeq())) {
+                    MyLogger.getLogger().info("SIZE AFTER WHILE" + sentMessages.size());
+                    MyLogger.getLogger().info(String.format("Sending steer message to %s %s...", serverAddr, serverPort));
+                    socket.send(message, serverAddr, serverPort);
+                    MyLogger.getLogger().info("Send steer message successfully! SeqNum : " + message.getMsgSeq());
+                    try {
+                        MyLogger.getLogger().info("SLEEP");
+                        Thread.sleep(config.getPingDelayMs());
+                        MyLogger.getLogger().info("AWAKE!");
+                    } catch (InterruptedException ignored) {
+                    }
+                }
+            }
             case STATE -> {}
             case ROLE_CHANGE -> {}
             case ANNOUNCEMENT -> {}
         }
-        socket.send(message, serverAddr, serverPort);
+    }
+
+    @Override
+    public void changeState(StateSystem state) {
+        this.state = state;
+    }
+
+    @Override
+    public SnakesProto.GameMessage getSteerMessage(SnakesProto.Direction direction) {
+        var steerMessage = SnakesProto.GameMessage.SteerMsg.newBuilder()
+                .setDirection(direction)
+                .build();
+        var gameMessage = SnakesProto.GameMessage.newBuilder()
+                .setSteer(steerMessage)
+                .setSenderId(myId)
+                .setMsgSeq(seqNum)
+                .build();
+        incrementSeqNum();
+        return gameMessage;
     }
 
     @Override
@@ -108,20 +134,25 @@ public class NetNode implements INetHandler {
                 var sentMessage = sentMessages.get(seqNumRecv);
                 switch (sentMessage.getTypeCase()) {
                     case STEER -> {
-
+                        sentMessages.remove(seqNumRecv);
+                        MyLogger.getLogger().info("SIZE AFTER RECEIVE" + sentMessages.size());
+                        MyLogger.getLogger().info("Client get ack message with seqNum: " + seqNumRecv);
                     }
                     case ROLE_CHANGE -> {
 
                     }
                     case JOIN -> {
                         sentMessages.remove(seqNumRecv);
-                        System.out.println(sentMessages.size());
+                        MyLogger.getLogger().info("SIZE AFTER RECEIVE" + sentMessages.size());
                         myId = receivedMessage.getMessage().getReceiverId();
                         MyLogger.getLogger().info("Client get ack message with seqNum: " + seqNumRecv);
                         Platform.runLater(()->gameView.render(StateSystem.ERROR_LOAD_GAME, "CONNECT!"));
                     }
 
                     case PING -> {
+
+                    }
+                    case STATE -> {
 
                     }
                 }
@@ -149,6 +180,9 @@ public class NetNode implements INetHandler {
             MyLogger.getLogger().info("Creation client unicast socket...");
             socket = new SocketWrap(new DatagramSocket());
             MyLogger.getLogger().info("Create client unicast socket successfully!");
+            communicationThreadPool.submit(this::receiver);
+            communicationThreadPool.submit(() -> sender(null, getJoinMessage(name)));
+
         } catch (SocketException e) {
             e.printStackTrace();
         }
@@ -160,36 +194,14 @@ public class NetNode implements INetHandler {
             MyLogger.getLogger().error("SOCKET IS NULL!!!");
             return;
         }
+        communicationThreadPool.shutdown();
+        MyLogger.getLogger().info("Shutdown thread pool on client.");
         socket.getSocket().close();
+
+        MyLogger.getLogger().info("Close socket on client.");
         //close socket and smth
     }
 
-    public void checkAliveServers() {
-        //logger.info("Check available servers.");
-        for (var game: availableGames.keySet()) {
-            if (System.currentTimeMillis() - availableGames.get(game).getValue() > TIMEOUT_MS) {
-                MyLogger.getLogger().info("Disconnect " + game.getKey() + " " + game.getValue());
-                availableGames.remove(game);
-                isMapChange = true;
-            }
-        }
-    }
-
-    public void changeListAvailableServer(SnakesProto.GameMessage.AnnouncementMsg server, int port, InetAddress ip) {
-//        isMapChange =  availableGames.put(new Pair<>(port, ip), new Pair<>(server, System.currentTimeMillis())) == null;
-        if (!availableGames.containsKey(new Pair<>(port, ip))) {
-            availableGames.put(new Pair<>(port, ip), new Pair<>(server, System.currentTimeMillis()));
-            MyLogger.getLogger().info("Connect " + port + " " + ip);
-            isMapChange = true;
-        } else {
-            availableGames.put(new Pair<>(port, ip), new Pair<>(server, System.currentTimeMillis()));
-            isMapChange = false;
-        }
-    }
-
-
-
-    @Override
     public SnakesProto.GameMessage getJoinMessage(String name) {
         var joinMsg = SnakesProto.GameMessage.JoinMsg.newBuilder().setName(name).build();
         var sendMessage = SnakesProto.GameMessage.newBuilder().setJoin(joinMsg).setMsgSeq(seqNum).build();
