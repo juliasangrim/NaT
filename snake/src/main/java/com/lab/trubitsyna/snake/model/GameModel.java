@@ -18,15 +18,15 @@ public class GameModel implements IModel {
     private final CopyOnWriteArrayList<IListener> listeners = new CopyOnWriteArrayList<>();
 
     @Getter
-    private SnakesProto.GameConfig config;
+    private final SnakesProto.GameConfig config;
     @Getter
-    private ConcurrentHashMap<SnakesProto.GamePlayer, Snake> players;
+    private final ConcurrentHashMap<SnakesProto.GamePlayer, Snake> players;
     @Getter
-    private Field field;
-    private String login;
-    private ArrayList<Food> food;
+    private final Field field;
+    private final String login;
+    private final ArrayList<Food> food;
     private int amountFood;
-    private int amountAliveSnakes = 0;
+    private final int amountAliveSnakes = 0;
     @Setter
     private StateSystem state;
 
@@ -44,42 +44,26 @@ public class GameModel implements IModel {
         this.state = state;
     }
 
-    public void changeSnakeDirection(SnakesProto.GamePlayer snakeOwner, SnakesProto.Direction newDirection) {
+        public void changeSnakesDirection(SnakesProto.GamePlayer snakeOwner, SnakesProto.Direction newDirection) {
         var snake = players.get(snakeOwner);
-        System.out.println("DO " + players.get(snakeOwner).getDirection());
-        MyLogger.getLogger().info("Amount of players " + players.size());
-        var currDirection = snake.getDirection();
-        if (currDirection == SnakesProto.Direction.RIGHT && newDirection == SnakesProto.Direction.LEFT) {
-            return;
-        }
-        if (currDirection == SnakesProto.Direction.LEFT && newDirection == SnakesProto.Direction.RIGHT) {
-            return;
-        }
-        if (currDirection == SnakesProto.Direction.UP && newDirection == SnakesProto.Direction.DOWN) {
-            return;
-        }
-        if (currDirection == SnakesProto.Direction.DOWN && newDirection == SnakesProto.Direction.UP) {
-            return;
-        }
-
-        snake.setDirection(newDirection);
+        snake.setNewDirection(newDirection);
         players.put(snakeOwner, snake);
-        System.out.println("POSLE " + players.get(snakeOwner).getDirection());
     }
 
 
-    public void startGame() throws GameException {
-        while (state == StateSystem.JOIN_GAME || state == StateSystem.NEW_GAME) {
+    public void oneTurnGame() throws GameException {
             MyLogger.getLogger().info("I'm in game loop");
-            updateGame();
-            updateModel();
+            if (state == StateSystem.NEW_GAME) {
+                updateGame();
+                updateModel();
+            } else {
+
+            }
             try {
                 Thread.sleep(config.getStateDelayMs());
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-        }
-
     }
 
     private Snake getNewSnake(int playerId) throws GameException {
@@ -142,7 +126,7 @@ public class GameModel implements IModel {
         return prob < config.getDeadFoodProb();
     }
 
-    private void updateSnakeOnField() {
+    private void updateSnakesOnField() {
         for (var player : players.keySet()) {
             var snake = players.get(player);
             //set tile for head
@@ -184,7 +168,7 @@ public class GameModel implements IModel {
     }
 
     public void updateModel()  {
-        updateSnakeOnField();
+        updateSnakesOnField();
         try {
             spawnFood();
         } catch (GameException e) {
@@ -237,10 +221,10 @@ public class GameModel implements IModel {
     }
 
     private Point updatePlaceSnake(Snake snake) {
-        var newHead = snake.getNewHead(snake.getDirection(), field.getWidth(), field.getHeight());
+        var newHead = snake.getNewHead(field.getWidth(), field.getHeight());
         Tile tile = field.getTile(newHead.getX(), newHead.getY());
 
-        if (tile != Tile.FOOD) {
+        if (tile != Tile.FOOD) { // mb
             field.setTile(snake.getTail(), Tile.BOARD);
             field.setTile(snake.getHead(), Tile.SNAKE_BODY);
             field.addEmptyPont(snake.getTail());
@@ -248,6 +232,7 @@ public class GameModel implements IModel {
         }
 
         snake.move(newHead);
+
         return new Point(newHead.getX(), newHead.getY());
     }
 
