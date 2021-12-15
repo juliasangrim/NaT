@@ -1,7 +1,8 @@
 package com.lab.trubitsyna.snake.controller;
 
 import com.lab.trubitsyna.snake.MyLogger;
-import com.lab.trubitsyna.snake.backend.handlers.MulticastReciever;
+import com.lab.trubitsyna.snake.backend.mcHandlers.MenuHandler;
+import com.lab.trubitsyna.snake.backend.mcHandlers.MulticastReciever;
 import com.lab.trubitsyna.snake.backend.node.NetNode;
 import com.lab.trubitsyna.snake.backend.protoClass.SnakesProto;
 import com.lab.trubitsyna.snake.view.IView;
@@ -15,8 +16,6 @@ import javafx.scene.control.ListView;
 import javafx.stage.Stage;
 
 import lombok.Setter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
@@ -99,10 +98,10 @@ public class MenuController implements IController {
         stage.close();
     }
 
-    private void addAvailableServer(NetNode client) {
+    private void addAvailableServer(MenuHandler handler) {
        // logger.info("Update list of available games...");
         availableGames.getItems().clear();
-        var listAvailableServers  = client.getAvailableGames();
+        var listAvailableServers  = handler.getAvailableGames();
         if (listAvailableServers.isEmpty()) {
             availableGames.getItems().add("No game found.");
         } else {
@@ -129,15 +128,15 @@ public class MenuController implements IController {
 
     @Override
     public void start() {
-        var client = new NetNode();
-        MulticastReciever multicastReciever = new MulticastReciever(client, NetNode.MULTICAST_PORT, NetNode.MULTICAST_ADDR);
+        var handler = new MenuHandler();
+        MulticastReciever multicastReciever = new MulticastReciever(handler, NetNode.MULTICAST_PORT, NetNode.MULTICAST_ADDR);
         mcReceiverThreadPool.submit(() ->{
             multicastReciever.init();
             while (state == StateSystem.MENU) {
                 multicastReciever.run();
                 Platform.runLater(() -> {
-                    if (client.isMapChange()) {
-                        addAvailableServer(client);
+                    if (handler.isMapChange()) {
+                        addAvailableServer(handler);
                     }
                 });
             }
