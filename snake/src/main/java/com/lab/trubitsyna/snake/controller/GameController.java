@@ -1,7 +1,6 @@
 package com.lab.trubitsyna.snake.controller;
 
 import com.lab.trubitsyna.snake.MyLogger;
-import com.lab.trubitsyna.snake.backend.handlers.MulticastSender;
 import com.lab.trubitsyna.snake.backend.node.INetHandler;
 import com.lab.trubitsyna.snake.backend.node.MasterNetNode;
 import com.lab.trubitsyna.snake.backend.node.NetNode;
@@ -10,15 +9,12 @@ import com.lab.trubitsyna.snake.gameException.GameException;
 import com.lab.trubitsyna.snake.model.*;
 import com.lab.trubitsyna.snake.view.StateSystem;
 import javafx.application.Platform;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Button;
-import javafx.scene.input.KeyEvent;
+import javafx.stage.Stage;
 import lombok.Getter;
 import lombok.Setter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -32,7 +28,7 @@ public class GameController implements IController{
     @Setter
     private IListenerView gameView;
     //TODO : testing
-    private MasterNetNode node;
+    private INetHandler node;
 
     @Setter
     private StateSystem state;
@@ -50,24 +46,40 @@ public class GameController implements IController{
     private String serverAddr;
     @Setter
     private SnakesProto.GameConfig serverConfig;
+
+
     @FXML
     private void addKeyListener() {
         board.getScene().setOnKeyPressed(event -> {
             switch (event.getCode()) {
                 case W, UP -> {
-                    model.changeSnakeDirection(node.getPlayers().get(0), SnakesProto.Direction.UP);
+                   // model.changeSnakeDirection(node.getPlayers().get(0), SnakesProto.Direction.UP);
+                    var steerMessage = node.getSteerMessage(SnakesProto.Direction.UP);
+                    threadPool.submit(()-> {
+                        node.sender(null, steerMessage);
+                    });
                     System.out.println("W");
+
                 }
                 case A, LEFT-> {
-                    model.changeSnakeDirection(node.getPlayers().get(0), SnakesProto.Direction.LEFT);
+                    var steerMessage = node.getSteerMessage(SnakesProto.Direction.LEFT);
+                    threadPool.submit(()-> {
+                        node.sender(null, steerMessage);
+                    });
                     System.out.println("L");
                 }
                 case D, RIGHT -> {
-                    model.changeSnakeDirection(node.getPlayers().get(0), SnakesProto.Direction.RIGHT);
+                    var steerMessage = node.getSteerMessage(SnakesProto.Direction.RIGHT);
+                    threadPool.submit(()-> {
+                        node.sender(null, steerMessage);
+                    });
                     System.out.println("R");
                 }
                 case S, DOWN -> {
-                    model.changeSnakeDirection(node.getPlayers().get(0), SnakesProto.Direction.DOWN);
+                    var steerMessage = node.getSteerMessage(SnakesProto.Direction.DOWN);
+                    threadPool.submit(()-> {
+                        node.sender(null, steerMessage);
+                    });
                     System.out.println("D");
                 }
             }
@@ -83,14 +95,16 @@ public class GameController implements IController{
         state = StateSystem.MENU;
         gameView.render(state, null);
         node.end();
+        threadPool.shutdown();
         gameView.noListen(model);
     }
 
     public void onExitWindowButtonPressed() {
         node.end();
         gameView.noListen(model);
-        Platform.exit();
-        System.exit(0);
+        threadPool.shutdown();
+        Stage stage = (Stage) exit.getScene().getWindow();
+        stage.close();
     }
 
     private void loadGame() {
@@ -107,35 +121,17 @@ public class GameController implements IController{
         config.initConfig();
         switch (state) {
             case JOIN_GAME -> {
-//                node = new NetNode(gameView, serverConfig, SnakesProto.NodeRole.NORMAL, serverAddr, serverPort);
-//                loadGame();
-//                node.start();
-//                threadPool.submit(() -> node.receiver());
-//                threadPool.submit(() -> node.sender(null, node.getJoinMessage(config.getLogin())));
+                node = new NetNode(gameView, serverConfig, SnakesProto.NodeRole.NORMAL, serverAddr, serverPort, config.getLogin());
+                loadGame();
+                node.start();
             }
             case NEW_GAME -> {
                 MyLogger.getLogger().info("Start game on client!");
                 model = new GameModel(config, state);
+                gameView.listen(model);
                 node = new MasterNetNode(config, SnakesProto.NodeRole.MASTER, model, 0);
                 node.start();
-                threadPool.submit(() -> {
-                    try {
-                        gameView.listen(model);
-                        model.startGame();
-                        model.updateModel();
-                        MyLogger.getLogger().info("FINISH THREADPOOL WITH STARTGAME AND UPDATEMODEL");
-                    } catch (GameException e) {
-                        e.printStackTrace();
-                    }
-                });
-                MyLogger.getLogger().info("Make thread for game!!");
-                threadPool.submit(() -> {
-                    while (state == StateSystem.NEW_GAME) {
 
-                        MyLogger.getLogger().info("Starting receiver on server!");
-                        node.receiver();
-                    }
-                });
               //  threadPool.submit(() -> node.sender();
 
             }
