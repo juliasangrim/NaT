@@ -13,8 +13,6 @@ public class GameMessageWrap {
     @Getter
     private SnakesProto.GameMessage message;
 
-    @Getter
-    private SnakesProto.GameMessage.AnnouncementMsg announcementMsg;
 
 
 
