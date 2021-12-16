@@ -17,13 +17,14 @@ import javafx.stage.Stage;
 
 import lombok.Setter;
 
+import java.util.ArrayDeque;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 
 public class MenuController implements IController {
-    //private final Logger logger = LoggerFactory.getLogger("APP");
+    private final ExecutorService mcReceiverThreadPool = Executors.newCachedThreadPool();
     @FXML
     private ListView<String> availableGames;
     @FXML
@@ -36,7 +37,6 @@ public class MenuController implements IController {
     private IView menuView;
 
     private String serverInfo;
-    private final ExecutorService mcReceiverThreadPool = Executors.newCachedThreadPool();
     private StateSystem state = StateSystem.MENU;
 
     @FXML
@@ -99,7 +99,6 @@ public class MenuController implements IController {
     }
 
     private void addAvailableServer(MenuHandler handler) {
-       // logger.info("Update list of available games...");
         availableGames.getItems().clear();
         var listAvailableServers  = handler.getAvailableGames();
         if (listAvailableServers.isEmpty()) {
@@ -123,7 +122,6 @@ public class MenuController implements IController {
                 availableGames.refresh();
             }
         }
-      //  logger.info("Update successfully!");
     }
 
     @Override

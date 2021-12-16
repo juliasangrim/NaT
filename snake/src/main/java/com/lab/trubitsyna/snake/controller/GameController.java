@@ -121,19 +121,18 @@ public class GameController implements IController{
         config.initConfig();
         switch (state) {
             case JOIN_GAME -> {
-                node = new NetNode(gameView, serverConfig, SnakesProto.NodeRole.NORMAL, serverAddr, serverPort, config.getLogin());
+                model = new GameModel();
+                gameView.listen(model);
+                node = new NetNode(gameView, serverConfig, SnakesProto.NodeRole.NORMAL, serverAddr, serverPort, config.getLogin(), model);
                 loadGame();
                 node.start();
             }
             case NEW_GAME -> {
                 MyLogger.getLogger().info("Start game on client!");
-                model = new GameModel(config, state);
+                model = new GameModel(config);
                 gameView.listen(model);
                 node = new MasterNetNode(config, SnakesProto.NodeRole.MASTER, model, 0);
                 node.start();
-
-              //  threadPool.submit(() -> node.sender();
-
             }
         }
 

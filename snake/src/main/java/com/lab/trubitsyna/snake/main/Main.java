@@ -1,5 +1,6 @@
 package com.lab.trubitsyna.snake.main;
 
+import com.lab.trubitsyna.snake.backend.protoClass.SnakesProto;
 import com.lab.trubitsyna.snake.controller.MenuController;
 import com.lab.trubitsyna.snake.view.View;
 import javafx.application.Application;
@@ -8,9 +9,13 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
+import java.net.DatagramSocket;
+import java.util.Random;
+
 
 public class Main extends Application{
     public static void main(String[] args) {
+
         launch(args);
     }
 

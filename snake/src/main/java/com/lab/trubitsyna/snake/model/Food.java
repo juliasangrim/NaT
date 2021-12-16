@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Random;
 
 public class Food {
-    private final static Random generator = new Random();
     @Getter
     private Point place;
 

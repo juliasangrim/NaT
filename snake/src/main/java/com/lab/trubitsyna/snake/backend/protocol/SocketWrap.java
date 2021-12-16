@@ -3,14 +3,12 @@ package com.lab.trubitsyna.snake.backend.protocol;
 import com.lab.trubitsyna.snake.MyLogger;
 import com.lab.trubitsyna.snake.backend.protoClass.SnakesProto;
 import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.*;
 
 public class SocketWrap implements IOWrap {
-   // private final Logger logger = LoggerFactory.getLogger("APP");
+
     private static final int MAX_SIZE = 8192;
     @Getter
     private DatagramSocket socket;
@@ -23,7 +21,6 @@ public class SocketWrap implements IOWrap {
     @Override
     public void send(SnakesProto.GameMessage message, String receiver, int receiverPort) {
         try {
-         //   logger.info("Creating packet...");
             InetAddress addr = InetAddress.getByName(receiver);
             var packet = new DatagramPacket(message.toByteArray(), message.getSerializedSize(), addr, receiverPort);
             MyLogger.getLogger().info("Send to " + addr + ", "+ receiverPort +  " " + message.getTypeCase());
@@ -45,6 +42,7 @@ public class SocketWrap implements IOWrap {
             MyLogger.getLogger().info(String.format("Trying receive message... on port=%d, addr=%s", socket.getLocalPort(), socket.getLocalAddress()));
             socket.receive(packet);
             MyLogger.getLogger().info(String.format("Receive message... on port=%d, addr=%s", socket.getLocalPort(), socket.getLocalAddress()));
+
             //get the message from array(bc packet.getData() return all bytes(include zero bytes))
             byte[] receivedBytes = new byte[packet.getLength()];
             System.arraycopy(receiveRowByte, 0, receivedBytes, 0, packet.getLength());

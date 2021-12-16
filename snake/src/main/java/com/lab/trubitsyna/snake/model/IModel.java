@@ -5,7 +5,7 @@ import com.lab.trubitsyna.snake.gameException.GameException;
 import com.lab.trubitsyna.snake.view.IView;
 
 public interface IModel {
-    void startGame() throws GameException;
+    void oneTurnGame() throws GameException;
     void updateModel() throws GameException;
     boolean addNewPlayer(SnakesProto.GamePlayer player);
     void notifyListeners() throws GameException;

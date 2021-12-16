@@ -1,4 +1,10 @@
 package com.lab.trubitsyna.snake.controller;
 
-public class ServerGameController {
+public class SettingsController {
+
+
+
+
+
+
 }

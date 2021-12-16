@@ -1,5 +1,6 @@
 package com.lab.trubitsyna.snake.model;
 
+import com.lab.trubitsyna.snake.MyLogger;
 import com.lab.trubitsyna.snake.backend.protoClass.SnakesProto;
 import com.lab.trubitsyna.snake.gameException.GameException;
 import lombok.Getter;
@@ -9,32 +10,34 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 
 public class Snake {
-
     @Getter
     private final ArrayDeque<Point> body;
+    @Getter
+    private int idOwner;
     private final ArrayList<SnakesProto.GameState.Coord> handleCoordList;
-    @Getter@Setter
-    private SnakesProto.GameState.Snake.SnakeState state;
+
+    @Getter
+    private Point head;
     @Getter@Setter
     private SnakesProto.Direction currDirection;
     @Getter@Setter
     private SnakesProto.Direction newDirection;
     @Getter@Setter
     private boolean isDead;
-    @Getter
-
-    private Point head;
     @Setter
     private int score;
-    @Getter
-    private final int idOwner;
+
+    @Getter@Setter
+    private SnakesProto.GameState.Snake.SnakeState state;
 
 
     public Snake(Point head, Point body, int idOwner, SnakesProto.Direction currDirection) {
         this.head = head;
         this.body = new ArrayDeque<>();
         this.handleCoordList = new ArrayList<>();
-        this.body.add(body);
+        if (body != null) {
+            this.body.add(body);
+        }
         this.idOwner = idOwner;
         this.state = SnakesProto.GameState.Snake.SnakeState.ALIVE;
         this.currDirection = currDirection;
@@ -66,15 +69,18 @@ public class Snake {
     }
 
 
-    public void converFromProto(SnakesProto.GameState.Snake snake) throws GameException {
+    public void converFromProto(SnakesProto.GameState.Snake snake)  {
         var pointsList = snake.getPointsList();
+        MyLogger.getLogger().info("get poin lists");
+        head = new Point(-1, -1);
         head.convertCoordToPoint(pointsList.get(0));
         body.clear();
         for (var point : pointsList) {
             if (!point.equals(pointsList.get(0))) {
-                var bodyPoint = new Point(-1, -1);
+               var bodyPoint = new Point(-1, -1);
                 bodyPoint.convertCoordToPoint(point);
-                body.addLast(bodyPoint);
+                var shiftedPoint = new Point(head.getX() + bodyPoint.getX(), head.getY() + bodyPoint.getY());
+                body.addLast(shiftedPoint);
             }
         }
     }
