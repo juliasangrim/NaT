@@ -24,7 +24,7 @@ public class Snake {
     private SnakesProto.Direction newDirection;
     @Getter@Setter
     private boolean isDead;
-    @Setter
+    @Getter@Setter
     private int score;
 
     @Getter@Setter
@@ -75,12 +75,14 @@ public class Snake {
         head = new Point(-1, -1);
         head.convertCoordToPoint(pointsList.get(0));
         body.clear();
+        var oldPoint = head;
         for (var point : pointsList) {
             if (!point.equals(pointsList.get(0))) {
                var bodyPoint = new Point(-1, -1);
                 bodyPoint.convertCoordToPoint(point);
-                var shiftedPoint = new Point(head.getX() + bodyPoint.getX(), head.getY() + bodyPoint.getY());
+                var shiftedPoint = new Point(oldPoint.getX() + bodyPoint.getX(), oldPoint.getY() + bodyPoint.getY());
                 body.addLast(shiftedPoint);
+                oldPoint = shiftedPoint;
             }
         }
     }

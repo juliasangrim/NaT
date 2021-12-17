@@ -31,7 +31,7 @@ public class Field {
         initField();
     }
 
-    private void initField() {
+    public void initField() {
         for (int y = 0; y < this.height; ++y) {
             for (int x = 0; x < this.width; ++x) {
                 this.tileArray[y * width + x] = Tile.BOARD;

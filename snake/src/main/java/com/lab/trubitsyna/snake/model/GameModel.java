@@ -3,7 +3,6 @@ package com.lab.trubitsyna.snake.model;
 import com.lab.trubitsyna.snake.MyLogger;
 import com.lab.trubitsyna.snake.gameException.GameException;
 import com.lab.trubitsyna.snake.backend.protoClass.SnakesProto;
-import com.lab.trubitsyna.snake.view.StateSystem;
 import com.lab.trubitsyna.snake.view.Tile;
 import javafx.application.Platform;
 import lombok.Getter;
@@ -65,10 +64,12 @@ public class GameModel implements IModel {
 
 
     public void updateClientModel(SnakesProto.GameState newStateModel) {
+        field.initField();
         stateOrder = newStateModel.getStateOrder();
         MyLogger.getLogger().info("UPD STATE ORDER");
         config = newStateModel.getConfig();
         MyLogger.getLogger().info(String.valueOf(config));
+        players.clear();
         for (var snakeProto : newStateModel.getSnakesList()) {
             MyLogger.getLogger().info("loop");
             var snake = new Snake(null, null, snakeProto.getPlayerId(), snakeProto.getHeadDirection());
@@ -76,7 +77,9 @@ public class GameModel implements IModel {
 
             snake.converFromProto(snakeProto);
             MyLogger.getLogger().info("converted snake");
+            snake.setScore(newStateModel.getPlayers().getPlayers(snake.getIdOwner()).getScore());
             players.put(newStateModel.getPlayers().getPlayers(snake.getIdOwner()), snake);
+
         }
         MyLogger.getLogger().info("Snakes convert");
         food.clear();
@@ -89,8 +92,11 @@ public class GameModel implements IModel {
         updateModel();
     }
 
+
+
     public void oneTurnGame() throws GameException {
         MyLogger.getLogger().info("I'm in game loop");
+        spawnFood();
         updateGame();
         updateModel();
         increaseStateOrder();
@@ -108,29 +114,29 @@ public class GameModel implements IModel {
 
                     body.setX(head.getX() + 1);
                     body.setY(head.getY());
-                    MyLogger.getLogger().debug("Snake direction RIGHT");
+//                    MyLogger.getLogger().debug("Snake direction RIGHT");
                 }
                 case UP -> {
                     body.setX(head.getX());
                     body.setY(head.getY() - 1);
-                    MyLogger.getLogger().debug("Snake direction UP");
+//                    MyLogger.getLogger().debug("Snake direction UP");
                 }
                 case DOWN -> {
                     body.setX(head.getX());
                     body.setY(head.getY() + 1);
-                    MyLogger.getLogger().debug("Snake direction DOWN");
+//                    MyLogger.getLogger().debug("Snake direction DOWN");
                 }
                 case LEFT -> {
                     body.setX(head.getX() - 1);
                     body.setY(head.getY());
-                    MyLogger.getLogger().debug("Snake direction LEFT");
+//                    MyLogger.getLogger().debug("Snake direction LEFT");
                 }
                 default -> {
                     throw new GameException("No such direction, please check code...");
                 }
             }
             var snake = new Snake(head, body, playerId, dir);
-            MyLogger.getLogger().info("Server make snake for client!!!!");
+//            MyLogger.getLogger().info("Server make snake for client!!!!");
             field.deleteEmptyPoint(head);
             field.deleteEmptyPoint(body);
             return snake;
@@ -144,80 +150,72 @@ public class GameModel implements IModel {
     public boolean addNewPlayer(SnakesProto.GamePlayer player) {
         try {
             players.put(player, getNewSnake(player.getId()));
-            MyLogger.getLogger().info("Add client to list!");
+//            MyLogger.getLogger().info("Add client to list!");
             return true;
         } catch (GameException e) {
             return false;
         }
     }
 
-    private boolean probSpawnFrut() {
+    private boolean isProbabilityFood() {
         double prob = Math.random();
         return prob < config.getDeadFoodProb();
+    }
+
+    private void probSpawnFrut(Snake snake) {
+        if (isProbabilityFood()) {
+            food.add(new Food(snake.getHead()));
+        } else {
+            field.addEmptyPont(snake.getHead());
+        }
+        for (var body : snake.getBody()) {
+            if (isProbabilityFood()) {
+                food.add(new Food(body));
+            } else {
+                field.addEmptyPont(snake.getHead());
+            }
+        }
     }
 
     private void updateSnakesOnField() {
         for (var player : players.keySet()) {
             var snake = players.get(player);
-            if (snake.isDead()) {
-                if (probSpawnFrut()) {
-                    field.setTile(snake.getHead(), Tile.FOOD);
-                    field.deleteEmptyPoint(snake.getHead());
-                } else {
-                    field.setTile(snake.getHead(), Tile.BOARD);
-                    field.addEmptyPont(snake.getHead());
-                }
-                for (var point : snake.getBody()) {
-                    if (probSpawnFrut()) {
-                        field.setTile(point, Tile.FOOD);
-                        field.deleteEmptyPoint(snake.getHead());
-                    } else {
-                        field.setTile(point, Tile.BOARD);
-                        field.addEmptyPont(point);
-                    }
-                }
-                //TODO : snake deleted?
-                players.remove(player);
-            }
-        }
-        for (var player : players.keySet()) {
-            var snake = players.get(player);
             //set tile for head
             if (!snake.isDead()) {
                 field.setTile(snake.getHead(), Tile.SNAKE_HEAD);
-                field.deleteEmptyPoint(snake.getHead());
                 for (var bodyPoint : snake.getBody()) {
                     field.setTile(bodyPoint, Tile.SNAKE_BODY);
-                    field.deleteEmptyPoint(snake.getHead());
                 }
+            } else {
+                field.setTile(snake.getHead(), Tile.BOARD);
+                for (var bodyPoint : snake.getBody()) {
+                    field.setTile(bodyPoint, Tile.BOARD);
+                }
+                players.remove(player);
             }
         }
+
     }
+
 
     private void updateFoodOnField() {
         for (var singleFood : food) {
             field.setTile(singleFood.getPlace(), Tile.FOOD);
-            field.deleteEmptyPoint(singleFood.getPlace());
         }
     }
 
     public void updateModel() {
         updateSnakesOnField();
-        MyLogger.getLogger().info("Upd snake");
-        try {
-            spawnFood();
-        } catch (GameException e) {
-            e.printStackTrace();
-        }
+//        MyLogger.getLogger().info("Upd snake");
         updateFoodOnField();
         try {
-            MyLogger.getLogger().info("I want to upd view.");
+//            MyLogger.getLogger().info("I want to upd view.");
             notifyListeners();
-            MyLogger.getLogger().info("Update success!");
+//            MyLogger.getLogger().info("Update success!");
         } catch (GameException e) {
             MyLogger.getLogger().error("ERROR: no update view.");
         }
-        MyLogger.getLogger().info("Notified listeners...");
+//        MyLogger.getLogger().info("Notified listeners...");
     }
 
     //the first food spawning
@@ -276,7 +274,8 @@ public class GameModel implements IModel {
             Tile collision = field.getTile(snake.getHead());
             MyLogger.getLogger().info("Update snake");
             if (collision == Tile.FOOD) {
-                snake.incrementScore();
+                snake.setScore(snake.getScore() + 1);
+                System.out.println(snake.getScore());
                 food.removeIf(singleFood -> singleFood.getPlace().equals(snake.getHead()));
                 try {
                     spawnFood();
@@ -284,20 +283,25 @@ public class GameModel implements IModel {
                     MyLogger.getLogger().info("No space for new food");
                 }
             }
+            if (snake.getBody().contains(snake.getHead())) {
+                snake.setDead(true);
+                probSpawnFrut(snake);
+            }
             for (var otherSnake : players.values()) {
 
-                System.out.println("COORD SNAKE: " + snake.getHead().getX() + ", " + snake.getHead().getY());
-                System.out.println("COORD OTHER SNAKE: " + otherSnake.getHead().getX() + ", " + otherSnake.getHead().getY());
                 if (snake.getIdOwner() != otherSnake.getIdOwner()) {
                     if (snake.getHead().equals(otherSnake.getHead())) {
                         snake.incrementScore();
                         otherSnake.incrementScore();
                         snake.setDead(true);
                         otherSnake.setDead(true);
+                        probSpawnFrut(snake);
+                        probSpawnFrut(otherSnake);
                     } else {
                         if (otherSnake.getBody().contains(snake.getHead())) {
                             otherSnake.incrementScore();
                             snake.setDead(true);
+                            probSpawnFrut(snake);
                         }
                     }
                 }
@@ -307,17 +311,18 @@ public class GameModel implements IModel {
 
     private void updateGame() {
         //move all snakes
-        for (var snake : players.values()) {
-            updatePlaceSnake(snake);
+        if (players != null) {
+            for (var snake : players.values()) {
+                updatePlaceSnake(snake);
+            }
+            countCollision();
         }
-        countCollision();
     }
     //notify listeners about changes
 
     @Override
     public void notifyListeners() throws GameException {
         for (IListener listener : listeners) {
-            System.out.println("Notify listener");
             notifyListener(listener);
         }
     }
@@ -327,6 +332,14 @@ public class GameModel implements IModel {
             throw new GameException("No listeners for our model...");
         }
         Platform.runLater(() -> listener.modelChanged(this));
+        StringBuilder message = new StringBuilder();
+        int i = 0;
+        for (var player : players.keySet()) {
+            ++i;
+            message.append(String.format("%s. %s \n Score: %s \n", i, player.getName(), players.get(player).getScore()));
+        }
+        Platform.runLater(() -> listener.modelChanged(this));
+        Platform.runLater(() -> listener.modelChanged(message.toString()));
     }
     //method for following our model changes
 

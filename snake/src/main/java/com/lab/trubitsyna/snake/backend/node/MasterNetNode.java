@@ -348,17 +348,29 @@ public class MasterNetNode implements INetHandler {
         }
 
         for (var singleFood : model.getFood()) {
-            foodProto.add(singleFood.getPlace().convertPointToCoord());
+            var point = singleFood.getPlace();
+            foodProto.add(point.convertPointToCoord());
         }
-            var gamePLayers = SnakesProto.GamePlayers.newBuilder()
-                    .addAllPlayers(players.values())
-                    .build();
+        var gamePLayers = SnakesProto.GamePlayers.newBuilder();
+        for (var player : model.getPlayers().keySet()) {
+            gamePLayers.addPlayers(SnakesProto.GamePlayer.newBuilder()
+                    .setId(player.getId())
+                    .setRole(player.getRole())
+                    .setIpAddress(player.getIpAddress())
+                    .setName(player.getName())
+                    .setPort(player.getPort())
+                    .setType(player.getType())
+                    .setScore(model.getPlayers().get(player).getScore()));
+        }
+
+        var updatedPlayers = gamePLayers.build();
+
 
         var gameState = SnakesProto.GameState.newBuilder()
                 .setStateOrder(model.getStateOrder())
                 .setConfig(config)
                 .addAllSnakes(protoSnakes)
-                .setPlayers(gamePLayers)
+                .setPlayers(updatedPlayers)
                 .addAllFoods(foodProto)
                 .build();
         var stateMessage = SnakesProto.GameMessage.StateMsg.newBuilder()

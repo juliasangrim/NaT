@@ -12,6 +12,8 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Button;
+import javafx.scene.control.TextArea;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import lombok.Getter;
 import lombok.Setter;
@@ -22,6 +24,8 @@ import java.util.concurrent.Executors;
 
 public class GameController implements IController{
     private final ExecutorService threadPool = Executors.newCachedThreadPool();
+    @Getter @FXML
+    private TextArea textField;
     //private final Logger logger = LoggerFactory.getLogger("APP");
     @Setter
     private GameModel model;

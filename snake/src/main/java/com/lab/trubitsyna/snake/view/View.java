@@ -11,9 +11,11 @@ import javafx.geometry.VPos;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import javafx.scene.text.FontSmoothingType;
+import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 
@@ -24,6 +26,7 @@ public class View implements IListenerView {
     @Setter
     private Stage stage;
     private Canvas board;
+    private TextArea rate;
 
     private String serverInfo;
     private SnakesProto.GameConfig config;
@@ -95,6 +98,7 @@ public class View implements IListenerView {
 
         GameController controller = gameLoader.getController();
         board = controller.getBoard();
+        rate = controller.getTextField();
         controller.setGameView(this);
         controller.setState(StateSystem.NEW_GAME);
         controller.start();
@@ -123,6 +127,7 @@ public class View implements IListenerView {
         stage.centerOnScreen();
 
         GameController controller = gameLoader.getController();
+        rate = controller.getTextField();
         board = controller.getBoard();
         controller.setGameView(this);
         controller.setServerPort(Integer.parseInt(serverInfo.split("\n")[3].split(" ")[1]));
@@ -188,6 +193,12 @@ public class View implements IListenerView {
         drawBackground(gc, field, getTileSize(field));
         drawElements(gc, field, getTileSize(field));
 
+    }
+
+    @Override
+    public void modelChanged(String message) {
+        rate.clear();
+        rate.setText(message);
     }
 
     @Override
