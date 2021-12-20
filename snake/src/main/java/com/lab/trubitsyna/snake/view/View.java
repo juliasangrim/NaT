@@ -43,8 +43,7 @@ public class View implements IListenerView {
                 case MENU -> loadMenu();
                 case CONFIG -> loadSetting();
                 case JOIN_GAME -> loadJoinGame();
-                case LOAD_GAME -> loadInfoAboutConnection();
-                case ERROR_LOAD_GAME -> loadInfoAboutError(message);
+                case LOAD_GAME, ERROR_LOAD_GAME ->  loadInfo(message) ;
 
             }
         }
@@ -65,20 +64,8 @@ public class View implements IListenerView {
         this.config = config;
     }
 
-    private void loadInfoAboutConnection() {
-        var gc = board.getGraphicsContext2D();
-        gc.clearRect(0, 0, board.getWidth(), board.getHeight());
-        gc.setTextAlign(TextAlignment.CENTER);
-        gc.setTextBaseline(VPos.CENTER);
-        gc.setFontSmoothingType(FontSmoothingType.LCD);
-        gc.fillText(
-                "CONNECTION....",
-                Math.round(board.getWidth()  / 2),
-                Math.round(board.getHeight() / 2)
-        );
-    }
 
-    private void loadInfoAboutError(String message) {
+    private void loadInfo(String message) {
         var gc = board.getGraphicsContext2D();
         gc.clearRect(0, 0, board.getWidth(), board.getHeight());
         gc.setTextAlign(TextAlignment.CENTER);
