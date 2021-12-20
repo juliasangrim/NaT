@@ -31,7 +31,8 @@ public class Field {
         initField();
     }
 
-    public void initField() {
+
+    public synchronized void initField() {
         for (int y = 0; y < this.height; ++y) {
             for (int x = 0; x < this.width; ++x) {
                 this.tileArray[y * width + x] = Tile.BOARD;
@@ -104,15 +105,15 @@ public class Field {
         emptyPoints.remove(point);
     }
 
-    public void setTile(Point point, Tile tile) {
+    public synchronized void setTile(Point point, Tile tile) {
         tileArray[point.getY() * width + point.getX()] = tile;
     }
 
-    public Tile getTile(Point point) {
+    public synchronized Tile getTile(Point point) {
         return tileArray[point.getY() * width + point.getX()];
     }
 
-    public Tile getTile(int x, int y) {
+    public synchronized Tile getTile(int x, int y) {
         return tileArray[y * width + x];
     }
 

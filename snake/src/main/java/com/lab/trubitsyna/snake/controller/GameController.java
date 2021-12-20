@@ -112,7 +112,7 @@ public class GameController implements IController{
     }
 
     private void loadGame() {
-        gameView.render(StateSystem.LOAD_GAME, null);
+        gameView.render(StateSystem.LOAD_GAME, "CONNECTING TO THE SERVER");
 
     }
 
@@ -127,15 +127,17 @@ public class GameController implements IController{
             case JOIN_GAME -> {
                 model = new GameModel();
                 gameView.listen(model);
-                node = new NetNode(gameView, serverConfig, SnakesProto.NodeRole.NORMAL, serverAddr, serverPort, config.getLogin(), model);
+                node = new NetNode(gameView, serverConfig, serverAddr, serverPort, config.getLogin(), model);
                 loadGame();
+                node.openSocket();
                 node.start();
             }
             case NEW_GAME -> {
                 MyLogger.getLogger().info("Start game on client!");
                 model = new GameModel(config);
                 gameView.listen(model);
-                node = new MasterNetNode(config, SnakesProto.NodeRole.MASTER, model, 0);
+                node = new MasterNetNode(config, model);
+                node.openSocket();
                 node.start();
             }
         }

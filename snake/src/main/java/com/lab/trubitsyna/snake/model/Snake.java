@@ -15,7 +15,6 @@ public class Snake {
     @Getter
     private int idOwner;
     private final ArrayList<SnakesProto.GameState.Coord> handleCoordList;
-
     @Getter
     private Point head;
     @Getter@Setter
@@ -24,8 +23,6 @@ public class Snake {
     private SnakesProto.Direction newDirection;
     @Getter@Setter
     private boolean isDead;
-    @Getter@Setter
-    private int score;
 
     @Getter@Setter
     private SnakesProto.GameState.Snake.SnakeState state;
@@ -42,7 +39,6 @@ public class Snake {
         this.state = SnakesProto.GameState.Snake.SnakeState.ALIVE;
         this.currDirection = currDirection;
         this.newDirection = currDirection;
-        this.score = 0;
         this.isDead = false;
 
     }
@@ -124,10 +120,6 @@ public class Snake {
     }
     public void deleteTail() {
         body.removeLast();
-    }
-
-    public void incrementScore() {
-        score = score + 1;
     }
 
 
