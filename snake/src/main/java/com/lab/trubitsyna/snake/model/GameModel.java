@@ -365,7 +365,7 @@ public class GameModel implements IModel {
             throw new IllegalArgumentException("Repeat listeners...");
         }
         listeners.add(listener);
-       // notifyListener(listener);
+        // notifyListener(listener);
     }
     //method for stop following our model changes
 
@@ -380,3 +380,4 @@ public class GameModel implements IModel {
     }
 
 }
+
