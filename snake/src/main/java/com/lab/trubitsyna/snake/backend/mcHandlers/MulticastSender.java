@@ -31,7 +31,7 @@ public class MulticastSender {
     }
 
     public void run() {
-        var message = master.getAnnouncementMessage();
+        var message = master.createAnnouncementMessage();
       //  logger.info("Sending MC message....");
         socket.send(message, mcAddr, mcPort);
       //  logger.info("Send MC message successfully!");

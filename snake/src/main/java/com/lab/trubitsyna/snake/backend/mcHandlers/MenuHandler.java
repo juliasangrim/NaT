@@ -31,6 +31,7 @@ public class MenuHandler {
     }
 
     public void changeListAvailableServer(SnakesProto.GameMessage.AnnouncementMsg server, int port, InetAddress ip) {
+
         if (!availableGames.containsKey(new Pair<>(port, ip))) {
             availableGames.put(new Pair<>(port, ip), new Pair<>(server, System.currentTimeMillis()));
             MyLogger.getLogger().info("Connect " + port + " " + ip);

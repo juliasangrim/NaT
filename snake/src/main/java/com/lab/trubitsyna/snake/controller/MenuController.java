@@ -1,6 +1,5 @@
 package com.lab.trubitsyna.snake.controller;
 
-import com.lab.trubitsyna.snake.MyLogger;
 import com.lab.trubitsyna.snake.backend.mcHandlers.MenuHandler;
 import com.lab.trubitsyna.snake.backend.mcHandlers.MulticastReciever;
 import com.lab.trubitsyna.snake.backend.node.NetNode;
@@ -17,7 +16,6 @@ import javafx.stage.Stage;
 
 import lombok.Setter;
 
-import java.util.ArrayDeque;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -29,8 +27,6 @@ public class MenuController implements IController {
     private ListView<String> availableGames;
     @FXML
     private Button playButton;
-    @FXML
-    private Button settingsButton;
     @FXML
     private Button exitButton;
     @Setter
@@ -44,10 +40,6 @@ public class MenuController implements IController {
         playButton.setOnMouseClicked(event -> onPlayButtonPressed());
     }
 
-    @FXML
-    public void mouseListenerSettings() {
-        settingsButton.setOnMouseClicked(event -> onSettingsButtonPressed());
-    }
 
     @FXML
     public void mouseListenerExit() {
@@ -73,27 +65,18 @@ public class MenuController implements IController {
     private void onGamePressed() {
         state = StateSystem.JOIN_GAME;
         mcReceiverThreadPool.shutdown();
-        MyLogger.getLogger().info("Thread pool for McReceiver shutdown!");
         menuView.render(state, null);
     }
 
     private void onPlayButtonPressed() {
         state = StateSystem.NEW_GAME;
         mcReceiverThreadPool.shutdown();
-        MyLogger.getLogger().info("Thread pool for McReceiver shutdown!");
         menuView.render(state, null);
     }
 
-    private void onSettingsButtonPressed() {
-        state = StateSystem.CONFIG;
-        mcReceiverThreadPool.shutdown();
-        MyLogger.getLogger().info("Thread pool for McReceiver shutdown!");
-        menuView.render(state, null);
-    }
     public void onExitButtonPressed() {
         state = StateSystem.EXIT;
         mcReceiverThreadPool.shutdown();
-        MyLogger.getLogger().info("Thread pool for McReceiver shutdown!");
         Stage stage = (Stage) exitButton.getScene().getWindow();
         stage.close();
     }
@@ -118,7 +101,6 @@ public class MenuController implements IController {
                     }
                 }
                 availableGames.getItems().add(info.toString());
-                //TODO with render
                 availableGames.refresh();
             }
         }

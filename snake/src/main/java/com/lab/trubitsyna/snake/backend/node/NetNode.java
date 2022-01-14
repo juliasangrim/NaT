@@ -13,15 +13,12 @@ import lombok.Setter;
 
 import java.net.DatagramSocket;
 import java.net.SocketException;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 public class NetNode implements INetHandler {
     public static final int TIMEOUT_MS = 1000;
 
     private final ExecutorService communicationThreadPool = Executors.newCachedThreadPool();
-
 
     private final ConcurrentHashMap<Long, SnakesProto.GameMessage> sentMessages = new ConcurrentHashMap<>();
     private final SnakesProto.GameConfig config;
@@ -34,10 +31,13 @@ public class NetNode implements INetHandler {
     private long seqNum;
     private SocketWrap socket;
 
-    private GameModel model;
+    private final GameModel model;
     private StateSystem state = StateSystem.JOIN_GAME;
     private int serverPort;
     private String serverAddr;
+
+    private Long lastTimeReceiveMessage = (long) 0;
+    private Long lastTimeSendMessage = (long) 0;
 
     public NetNode(IView gameView, SnakesProto.GameConfig config,
                    String serverAddr, int serverPort, String name, GameModel model) {
@@ -48,7 +48,7 @@ public class NetNode implements INetHandler {
         this.gameView = gameView;
         this.me = new Player(name, -1, 0, "", SnakesProto.NodeRole.NORMAL);
         this.model = model;
-        this.serverInfo = new ServerInfo(null, null, null);
+        this.serverInfo = new ServerInfo(null, null, null, me);
     }
 
     public synchronized void incrementSeqNum() {
@@ -61,27 +61,26 @@ public class NetNode implements INetHandler {
             MyLogger.getLogger().error("SOCKET IS NULL!!!");
             return;
         }
+        lastTimeSendMessage = System.currentTimeMillis();
         switch (message.getTypeCase()) {
-            case ACK -> {
-                socket.send(message, serverAddr, serverPort);
-            }
+            case ACK -> sendAckMessage(message);
             case JOIN -> sendJoinMessage(message);
-            case PING -> {}
+            case PING -> sendPingMessage(message);
             case STEER -> sendSteerMessage(message);
         }
     }
 
+    private void sendAckMessage(SnakesProto.GameMessage message) {
+        socket.send(message, serverAddr, serverPort);
+    }
+
+
     private void sendJoinMessage(SnakesProto.GameMessage message) {
         sentMessages.put(message.getMsgSeq(), message);
         while (sentMessages.containsKey(message.getMsgSeq())) {
-            MyLogger.getLogger().info("SIZE AFTER WHILE" + sentMessages.size());
-            MyLogger.getLogger().info(String.format("Sending join message to %s %s...", serverAddr, serverPort));
             socket.send(message, serverAddr, serverPort);
-            MyLogger.getLogger().info("Send join message successfully! SeqNum : " + message.getMsgSeq());
             try {
-                MyLogger.getLogger().info("SLEEP");
                 Thread.sleep(TIMEOUT_MS);
-                MyLogger.getLogger().info("AWAKE!");
             } catch (InterruptedException ignored) {
             }
         }
@@ -90,19 +89,30 @@ public class NetNode implements INetHandler {
     private void sendSteerMessage(SnakesProto.GameMessage message) {
         sentMessages.put(message.getMsgSeq(), message);
         while (sentMessages.containsKey(message.getMsgSeq())) {
-            MyLogger.getLogger().info("SIZE AFTER WHILE" + sentMessages.size());
-            MyLogger.getLogger().info(String.format("Sending steer message to %s %s...", serverAddr, serverPort));
             socket.send(message, serverAddr, serverPort);
-            MyLogger.getLogger().info("Send steer message successfully! SeqNum : " + message.getMsgSeq());
             try {
-                MyLogger.getLogger().info("SLEEP");
                 Thread.sleep(config.getPingDelayMs());
-                MyLogger.getLogger().info("AWAKE!");
             } catch (InterruptedException ignored) {
             }
         }
     }
 
+    private void sendPingMessage(SnakesProto.GameMessage message) {
+        sentMessages.put(message.getMsgSeq(), message);
+        socket.send(message, serverAddr, serverPort);
+    }
+
+    private SnakesProto.GameMessage getPingMessage() {
+        var pingMessage = SnakesProto.GameMessage.PingMsg.newBuilder()
+                .build();
+        var message = SnakesProto.GameMessage.newBuilder()
+                .setPing(pingMessage)
+                .setSenderId(me.getId())
+                .setMsgSeq(seqNum)
+                .build();
+        incrementSeqNum();
+        return message;
+    }
 
     @Override
     public SnakesProto.GameMessage getSteerMessage(SnakesProto.Direction direction) {
@@ -125,38 +135,33 @@ public class NetNode implements INetHandler {
             return;
         }
         var receivedMessage = socket.receive();
-
+        lastTimeReceiveMessage = System.currentTimeMillis();
         long seqNumRecv = receivedMessage.getMessage().getMsgSeq();
         switch (receivedMessage.getMessage().getTypeCase()) {
             case ACK -> {
                 var sentMessage = sentMessages.get(seqNumRecv);
                 switch (sentMessage.getTypeCase()) {
                     case STEER -> {
+                        //remove all steer messages, if seqNumRecv steer bigger then they
                         for (var messageSeqNum : sentMessages.keySet()) {
                             if (messageSeqNum <= seqNumRecv && sentMessages.get(messageSeqNum).getTypeCase() == SnakesProto.GameMessage.TypeCase.STEER) {
                                 sentMessages.remove(messageSeqNum);
                             }
                         }
-                        MyLogger.getLogger().info("SIZE AFTER RECEIVE" + sentMessages.size());
-                        MyLogger.getLogger().info("Client get ack message with seqNum: " + seqNumRecv);
                     }
-                    case ROLE_CHANGE -> {}
                     case JOIN -> {
                         sentMessages.remove(seqNumRecv);
-                        MyLogger.getLogger().info("SIZE AFTER RECEIVE" + sentMessages.size());
                         me.setId(receivedMessage.getMessage().getReceiverId());
-                        MyLogger.getLogger().info("Client get ack message with seqNum: " + seqNumRecv);
-                        //Platform.runLater(()->gameView.render(StateSystem.ERROR_LOAD_GAME, "CONNECT!"));
                     }
-
-                    case PING -> {}
+                    case PING -> sentMessages.remove(seqNumRecv);
                 }
             }
-            case JOIN -> {}
-            case PING -> {}
+            case PING -> {
+                sender(null, getAckMessage(receivedMessage.getMessage().getMsgSeq(), me.getId()));
+            }
             case ERROR -> {
                 sentMessages.remove(receivedMessage.getMessage().getMsgSeq());
-                Platform.runLater(()->gameView.render(StateSystem.ERROR_LOAD_GAME, receivedMessage.getMessage().getError().getErrorMessage()));
+                Platform.runLater(() -> gameView.render(StateSystem.ERROR_LOAD_GAME, receivedMessage.getMessage().getError().getErrorMessage()));
             }
             case STATE -> {
                 var stateMessage = receivedMessage.getMessage().getState();
@@ -172,12 +177,9 @@ public class NetNode implements INetHandler {
             case ROLE_CHANGE -> {
                 var roleChangeMessage = receivedMessage.getMessage().getRoleChange();
                 me.setRole(roleChangeMessage.getReceiverRole());
-                MyLogger.getLogger().info(me.getRole().toString());
                 sender(null, getAckMessage(receivedMessage.getMessage().getMsgSeq(), receivedMessage.getMessage().getReceiverId()));
-                //if for master if you deputy
             }
         }
-
 
 
     }
@@ -190,14 +192,12 @@ public class NetNode implements INetHandler {
 
     @Override
     public void openSocket() {
-        MyLogger.getLogger().info("Creation client unicast socket...");
         try {
             socket = new SocketWrap(new DatagramSocket());
             socket.getSocket().setSoTimeout(TIMEOUT_MS);
         } catch (SocketException e) {
             e.printStackTrace();
         }
-        MyLogger.getLogger().info("Create client unicast socket successfully!");
     }
 
     @Override
@@ -214,37 +214,46 @@ public class NetNode implements INetHandler {
         communicationThreadPool.submit(() -> sender(null, getJoinMessage(me.getName())));
     }
 
+
     @Override
     public void start() {
-            me.setPort(socket.getSocket().getLocalPort());
-            startReceiver();
-            if (me.getRole() == SnakesProto.NodeRole.NORMAL) {
-                sendFirstJoin();
-            }
+        startReceiver();
+        me.setPort(socket.getSocket().getLocalPort());
+        serverInfo.setNewSocket(socket);
+        if (me.getRole() == SnakesProto.NodeRole.NORMAL) {
+            sendFirstJoin();
+        }
     }
 
     @Override
     public void end() {
+        state = StateSystem.MENU;
         if (socket == null) {
             MyLogger.getLogger().error("SOCKET IS NULL!!!");
             return;
         }
         communicationThreadPool.shutdown();
-        MyLogger.getLogger().info("Shutdown thread pool on client.");
-
-        MyLogger.getLogger().info("Close socket on client.");
-        //close socket and smth
     }
 
     public SnakesProto.GameMessage getJoinMessage(String name) {
-        var joinMsg = SnakesProto.GameMessage.JoinMsg.newBuilder().setName(name).build();
-        var sendMessage = SnakesProto.GameMessage.newBuilder().setJoin(joinMsg).setMsgSeq(seqNum).build();
+        var joinMsg = SnakesProto.GameMessage.JoinMsg.newBuilder()
+                .setName(name)
+                .build();
+        var sendMessage = SnakesProto.GameMessage.newBuilder()
+                .setJoin(joinMsg)
+                .setMsgSeq(seqNum)
+                .build();
         incrementSeqNum();
         return sendMessage;
     }
 
     private SnakesProto.GameMessage getAckMessage(long msgSeq, int receiverId) {
         var ackMessage = SnakesProto.GameMessage.AckMsg.newBuilder().build();
-        return SnakesProto.GameMessage.newBuilder().setAck(ackMessage).setMsgSeq(msgSeq).setSenderId(me.getId()).setReceiverId(receiverId).build();
+        return SnakesProto.GameMessage.newBuilder()
+                .setAck(ackMessage)
+                .setMsgSeq(msgSeq)
+                .setSenderId(me.getId())
+                .setReceiverId(receiverId)
+                .build();
     }
 }

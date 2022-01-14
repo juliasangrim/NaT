@@ -2,7 +2,7 @@ package com.lab.trubitsyna.snake.view;
 
 import com.lab.trubitsyna.snake.backend.protoClass.SnakesProto;
 import com.lab.trubitsyna.snake.controller.GameController;
-import com.lab.trubitsyna.snake.controller.IListenerView;
+import com.lab.trubitsyna.snake.controller. IListenerView;
 import com.lab.trubitsyna.snake.controller.MenuController;
 import com.lab.trubitsyna.snake.gameException.GameException;
 import com.lab.trubitsyna.snake.model.*;
@@ -41,7 +41,6 @@ public class View implements IListenerView {
             switch (stateSystem) {
                 case NEW_GAME -> loadGame();
                 case MENU -> loadMenu();
-                case CONFIG -> loadSetting();
                 case JOIN_GAME -> loadJoinGame();
                 case LOAD_GAME, ERROR_LOAD_GAME ->  loadInfo(message) ;
 
@@ -100,12 +99,6 @@ public class View implements IListenerView {
 
         controller.start();
         stage.setOnCloseRequest(t -> controller.onExitButtonPressed());
-    }
-
-    private void loadSetting() throws Exception{
-        FXMLLoader gameLoader =  new FXMLLoader(View.class.getResource("app.fxml"));
-        stage.setScene(new Scene(gameLoader.load()));
-       // stage.setOnCloseRequest(t -> controller.onExitButtonPressed());
     }
 
     private void loadJoinGame() throws Exception{

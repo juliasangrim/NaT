@@ -12,12 +12,12 @@ public class Field {
     private final static int FIND_WINDOW_SIZE = 5;
     private final static int LOCAL_MIDDLE = (FIND_WINDOW_SIZE - 1) / 2;
     @Getter
-    private int width;
+    private final int width;
     @Getter
-    private int height;
-    private Tile[] tileArray;
+    private final int height;
+    private final Tile[] tileArray;
     @Getter
-    private ArrayList<Point> emptyPoints;
+    private final ArrayList<Point> emptyPoints;
     @Getter
     private boolean isThereFreeSpace;
 

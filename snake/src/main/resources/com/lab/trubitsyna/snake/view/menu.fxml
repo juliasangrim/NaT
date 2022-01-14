@@ -26,13 +26,7 @@
          </font>
       </Button>
       <ListView fx:id="availableGames" layoutX="439.0" layoutY="189.0" onMouseClicked="#listListener" prefHeight="482.0" prefWidth="538.0" />
-      <Button fx:id="settingsButton" layoutX="106.0" layoutY="407.0" mnemonicParsing="false" prefHeight="45.0" prefWidth="283.0" onAction="#mouseListenerSettings" style="-fx-background-color: LightYellow;" text="SETTINGS">
-         <font>
-            <Font name="Bookman Old Style Bold" size="19.0" />
-         </font>
-      </Button>
-      <Button fx:id="exitButton" layoutX="106.0" layoutY="495.0" mnemonicParsing="false" prefHeight="45.0" prefWidth="283.0"
-             onAction="#mouseListenerExit" style="-fx-background-color: LightYellow;" text="EXIT">
+      <Button fx:id="exitButton" layoutX="106.0" layoutY="385.0" mnemonicParsing="false" onAction="#mouseListenerExit" prefHeight="45.0" prefWidth="283.0" style="-fx-background-color: LightYellow;" text="EXIT">
          <font>
             <Font name="Bookman Old Style Bold" size="19.0" />
          </font>

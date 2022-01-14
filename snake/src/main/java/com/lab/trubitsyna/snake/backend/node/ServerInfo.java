@@ -16,6 +16,10 @@ import java.util.concurrent.ScheduledExecutorService;
 public class ServerInfo {
 
     @Getter@Setter
+    private Player newPlayer;
+    @Getter@Setter
+    private SocketWrap newSocket;
+    @Getter@Setter
     private ConcurrentHashMap<Integer, Player> players;
 
     @Getter@Setter
@@ -30,10 +34,12 @@ public class ServerInfo {
 
 
     public ServerInfo(SnakesProto.GameConfig config, ConcurrentHashMap<Integer, Player> players,
-                      ConcurrentHashMap<Integer, Snake> snakes) {
+                      ConcurrentHashMap<Integer, Snake> snakes, Player newPlayer) {
         this.config = config;
         this.players = players;
         this.currId = 0;
         this.snakes = snakes;
+        this.newPlayer = newPlayer;
+        this.newSocket = null;
     }
 }

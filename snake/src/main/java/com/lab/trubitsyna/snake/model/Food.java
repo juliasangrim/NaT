@@ -8,7 +8,7 @@ import java.util.Random;
 
 public class Food {
     @Getter
-    private Point place;
+    private final Point place;
 
     public Food(Point point) {
         this.place = point;

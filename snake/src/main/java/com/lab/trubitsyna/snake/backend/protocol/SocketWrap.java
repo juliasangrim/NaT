@@ -11,7 +11,7 @@ public class SocketWrap implements IOWrap {
 
     private static final int MAX_SIZE = 8192;
     @Getter
-    private DatagramSocket socket;
+    private final DatagramSocket socket;
 
 
     public SocketWrap(DatagramSocket socket) throws SocketException {
@@ -23,7 +23,9 @@ public class SocketWrap implements IOWrap {
         try {
             InetAddress addr = InetAddress.getByName(receiver);
             var packet = new DatagramPacket(message.toByteArray(), message.getSerializedSize(), addr, receiverPort);
-            MyLogger.getLogger().info("Send to " + addr + ", "+ receiverPort +  " " + message.getTypeCase());
+            if (message.getTypeCase() != SnakesProto.GameMessage.TypeCase.ANNOUNCEMENT) {
+                MyLogger.getLogger().info("Send to " + addr + ", " + receiverPort + " " + message.getTypeCase());
+            }
             socket.send(packet);
         } catch (IOException e) {
             e.printStackTrace();

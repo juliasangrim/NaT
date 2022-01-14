@@ -62,7 +62,6 @@ public class GameController implements IController{
                     threadPool.submit(()-> {
                         node.sender(null, steerMessage);
                     });
-                    System.out.println("W");
 
                 }
                 case A, LEFT-> {
@@ -70,21 +69,18 @@ public class GameController implements IController{
                     threadPool.submit(()-> {
                         node.sender(null, steerMessage);
                     });
-                    System.out.println("L");
                 }
                 case D, RIGHT -> {
                     var steerMessage = node.getSteerMessage(SnakesProto.Direction.RIGHT);
                     threadPool.submit(()-> {
                         node.sender(null, steerMessage);
                     });
-                    System.out.println("R");
                 }
                 case S, DOWN -> {
                     var steerMessage = node.getSteerMessage(SnakesProto.Direction.DOWN);
                     threadPool.submit(()-> {
                         node.sender(null, steerMessage);
                     });
-                    System.out.println("D");
                 }
             }
         });

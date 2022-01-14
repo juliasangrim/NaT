@@ -7,11 +7,11 @@ import java.net.InetAddress;
 
 public class GameMessageWrap {
     @Getter
-    private String senderAddr;
+    private final String senderAddr;
     @Getter
-    private int port;
+    private final int port;
     @Getter
-    private SnakesProto.GameMessage message;
+    private final SnakesProto.GameMessage message;
 
 
 
@@ -22,7 +22,4 @@ public class GameMessageWrap {
         this.port = port;
     }
 
-
-    public void parseMessage() {
-    }
 }

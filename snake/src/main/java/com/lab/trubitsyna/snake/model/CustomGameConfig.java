@@ -140,8 +140,4 @@ public class CustomGameConfig {
                 setDeadFoodProb(deadProbFood).setPingDelayMs(pingDelay).setNodeTimeoutMs(nodeTimeout).build();
     }
 
-    public void convertFromProto(SnakesProto.GameConfig protoConfig) {
-
-
-    }
 }
